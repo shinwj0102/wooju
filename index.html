@@ -1,0 +1,2283 @@
+<!doctype html>
+<html lang="ko"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GrowLab AI | 스마트 식물 생육 &amp; 재배 실험 관리</title>
+  <meta name="description" content="식물 종류와 재배 환경에 맞춰 적정 생장 조건을 안내하고 물 주기, 토양 압력, 온도, 토양 pH, 성장 기록을 체계적으로 관리하는 스마트 식물 관리 웹 앱">
+  <meta property="og:title" content="GrowLab AI">
+  <meta property="og:description" content="식물 종류와 재배 환경에 맞춰 물 주기, 토양 압력, 온도, 토양 pH, 성장 기록을 관리하는 스마트 식물 실험실">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&amp;family=Noto+Sans+KR:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@500;600;700;800&amp;display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f7faf7;
+      --surface: #ffffff;
+      --surface-soft: #f1f7f2;
+      --surface-muted: #f8fafc;
+      --text: #0f172a;
+      --text-muted: #475569;
+      --text-subtle: #64748b;
+      --border: #d9eadc;
+      --border-slate: #e2e8f0;
+      --primary: #064e3b;
+      --primary-hover: #065f46;
+      --accent: #65a30d;
+      --accent-soft: #ecfccb;
+      --good-bg: #ecfdf5;
+      --good-border: #a7f3d0;
+      --good-text: #065f46;
+      --warn-bg: #fffbeb;
+      --warn-border: #fde68a;
+      --warn-text: #92400e;
+      --danger-bg: #fef2f2;
+      --danger-border: #fecaca;
+      --danger-text: #991b1b;
+      --font-sans: "Plus Jakarta Sans", "Noto Sans KR", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+      --radius-lg: 16px;
+      --radius-md: 12px;
+      --radius-sm: 8px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html { font-family: var(--font-sans); scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+    button, input, select, textarea { font: inherit; color: inherit; }
+    button { cursor: pointer; }
+    img { display: block; max-width: 100%; }
+
+    .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+    .tabular { font-variant-numeric: tabular-nums; }
+    .sr-only {
+      position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+    }
+
+    /* Top Navigation Bar (Strict 3-Zone Contract) */
+    .topbar {
+      position: sticky; top: 0; z-index: 30;
+      height: 54px;
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+    }
+    .topbar-inner {
+      max-width: 1200px; height: 100%; margin: 0 auto; padding: 0 16px;
+      display: flex; align-items: center; justify-content: space-between; gap: 32px;
+    }
+    .brand-btn {
+      background: none; border: 0; padding: 0;
+      font-size: 18px; font-weight: 800; letter-spacing: -0.02em;
+      color: #022c22; white-space: nowrap; flex-shrink: 0;
+    }
+    .top-nav {
+      display: none; align-items: center; gap: 24px;
+    }
+    .top-nav-btn {
+      background: none; border: 0; border-bottom: 2px solid transparent;
+      padding: 6px 2px; font-size: 14px; font-weight: 500;
+      color: var(--text-muted); white-space: nowrap; flex-shrink: 0;
+      transition: color 0.16s ease, border-color 0.16s ease;
+    }
+    .top-nav-btn:hover { color: var(--primary); }
+    .top-nav-btn.active {
+      color: #022c22; font-weight: 700; border-bottom-color: var(--primary);
+    }
+    @media (min-width: 768px) {
+      .topbar { height: 58px; }
+      .topbar-inner { padding: 0 24px; }
+      .top-nav { display: flex; }
+    }
+
+    /* Main Container */
+    .main-wrap {
+      max-width: 1200px; width: 100%; margin: 0 auto;
+      padding: 20px 16px 96px;
+      min-height: calc(100vh - 58px);
+    }
+    @media (min-width: 768px) {
+      .main-wrap { padding: 24px 24px 104px; }
+    }
+
+    /* Bottom Navigation Bar */
+    .bottom-nav {
+      position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+      height: 60px;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(10px);
+      border-top: 1px solid var(--border);
+    }
+    .bottom-nav-inner {
+      max-width: 760px; height: 100%; margin: 0 auto;
+      display: grid; grid-template-columns: repeat(5, 1fr);
+    }
+    .bottom-nav-btn {
+      position: relative; background: none; border: 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+      min-height: 44px; font-size: 11px; font-weight: 500; color: var(--text-subtle);
+      white-space: nowrap; transition: color 0.16s ease;
+    }
+    .bottom-nav-btn.active { color: var(--primary); font-weight: 700; }
+    .bottom-nav-btn.active::before {
+      content: ""; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+      width: 32px; height: 2px; border-radius: 99px; background: var(--accent);
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      min-height: 40px; padding: 8px 16px; border-radius: var(--radius-md);
+      border: 1px solid transparent; font-size: 13px; font-weight: 600;
+      white-space: nowrap; flex-shrink: 0;
+      transition: background-color 0.16s ease, border-color 0.16s ease, transform 0.12s ease;
+    }
+    .btn:active { transform: scale(0.985); }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
+    .btn-soft { background: var(--bg); border-color: var(--border); color: var(--primary); }
+    .btn-soft:hover:not(:disabled) { background: var(--surface-soft); }
+    .btn-outline { background: #fff; border-color: var(--border-slate); color: #334155; }
+    .btn-outline:hover:not(:disabled) { background: var(--surface-muted); }
+    .btn-danger-outline { background: #fff; border-color: var(--danger-border); color: var(--danger-text); }
+    .btn-danger-outline:hover:not(:disabled) { background: var(--danger-bg); }
+    .btn-sm { min-height: 36px; padding: 6px 12px; font-size: 12px; border-radius: 10px; }
+
+    /* Cards & Surfaces */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+    }
+    .card-dashed {
+      background: var(--surface);
+      border: 1px dashed #a7d7b2;
+      border-radius: var(--radius-lg);
+      padding: 28px 20px;
+      text-align: center;
+    }
+    .sub-box {
+      background: var(--bg);
+      border: 1px solid var(--border-slate);
+      border-radius: var(--radius-md);
+      padding: 14px;
+    }
+    .section-head {
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+      gap: 12px; margin-bottom: 14px;
+    }
+    .section-title { margin: 0; font-size: 17px; font-weight: 700; color: var(--text); letter-spacing: -0.01em; }
+    .hero-title { margin: 0; font-size: clamp(19px, 2.4vw, 24px); font-weight: 800; color: var(--text); letter-spacing: -0.02em; text-wrap: balance; }
+    .muted { color: var(--text-subtle); }
+    .kicker { font-size: 12px; font-weight: 600; color: var(--text-subtle); }
+
+    /* Grids */
+    .stack { display: flex; flex-direction: column; gap: 22px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr; gap: 16px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr; gap: 14px; }
+    .grid-4 { display: grid; grid-template-columns: 1fr; gap: 14px; }
+    @media (min-width: 640px) {
+      .grid-2 { grid-template-columns: repeat(2, 1fr); }
+      .grid-3 { grid-template-columns: repeat(2, 1fr); }
+      .grid-4 { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (min-width: 1024px) {
+      .grid-3 { grid-template-columns: repeat(3, 1fr); }
+      .grid-4 { grid-template-columns: repeat(4, 1fr); }
+    }
+
+    /* Filter Segmented Controls */
+    .filter-bar {
+      display: flex; flex-wrap: wrap; gap: 8px;
+    }
+    .filter-btn {
+      min-height: 36px; padding: 6px 12px; border-radius: 10px;
+      border: 1px solid var(--border-slate); background: #fff;
+      font-size: 12px; font-weight: 600; color: var(--text-muted);
+      white-space: nowrap; transition: all 0.15s ease;
+    }
+    .filter-btn:hover { background: var(--surface-muted); color: var(--text); }
+    .filter-btn.active {
+      background: var(--primary); border-color: var(--primary); color: #fff;
+    }
+
+    /* Semantic Status Label (Text + Icon, never color alone) */
+    .status-tag {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 8px; border-radius: 6px; border: 1px solid;
+      font-size: 12px; font-weight: 600; white-space: nowrap; flex-shrink: 0;
+    }
+    .status-good { background: var(--good-bg); border-color: var(--good-border); color: var(--good-text); }
+    .status-warning { background: var(--warn-bg); border-color: var(--warn-border); color: var(--warn-text); }
+    .status-danger { background: var(--danger-bg); border-color: var(--danger-border); color: var(--danger-text); }
+
+    /* Rows & Lists */
+    .list-row {
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+      gap: 10px; padding: 12px 0; border-bottom: 1px solid #f1f5f9;
+    }
+    .list-row:last-child { border-bottom: 0; padding-bottom: 0; }
+    .list-row:first-child { padding-top: 0; }
+
+    /* Plant Photo */
+    .plant-thumb {
+      width: 100%; height: 156px; object-fit: cover; border-radius: 12px;
+      border: 1px solid var(--border); background: #e8f5e9;
+    }
+    .plant-thumb-sm {
+      width: 72px; height: 72px; object-fit: cover; border-radius: 12px;
+      border: 1px solid var(--border); flex-shrink: 0; background: #e8f5e9;
+    }
+
+    /* Forms & Inputs */
+    .field-label {
+      display: block; font-size: 12px; font-weight: 600; color: #334155; margin-bottom: 6px;
+    }
+    .input, .select, .textarea {
+      width: 100%; border: 1px solid var(--border-slate); border-radius: 10px;
+      background: #fff; padding: 9px 12px; font-size: 14px; color: var(--text);
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .input, .select { min-height: 42px; }
+    .input:focus, .select:focus, .textarea:focus {
+      outline: none; border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(6, 78, 59, 0.12);
+    }
+
+    /* Modals */
+    .modal-backdrop {
+      position: fixed; inset: 0; z-index: 60;
+      background: rgba(15, 23, 42, 0.52); backdrop-filter: blur(3px);
+      display: flex; align-items: flex-end; justify-content: center; padding: 0;
+    }
+    @media (min-width: 640px) {
+      .modal-backdrop { align-items: center; padding: 16px; }
+    }
+    .modal-panel {
+      width: 100%; max-width: 680px; max-height: 92vh; overflow-y: auto;
+      background: #fff; border: 1px solid var(--border);
+      border-radius: 20px 20px 0 0; box-shadow: 0 24px 48px rgba(15, 23, 42, 0.22);
+    }
+    @media (min-width: 640px) {
+      .modal-panel { border-radius: 18px; }
+    }
+    .modal-head {
+      position: sticky; top: 0; z-index: 5;
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      padding: 16px 20px; background: rgba(255, 255, 255, 0.96);
+      border-bottom: 1px solid var(--border-slate);
+    }
+    .modal-body { padding: 20px; display: flex; flex-direction: column; gap: 18px; }
+    .icon-btn {
+      width: 40px; height: 40px; border-radius: 10px; border: 0;
+      background: transparent; color: var(--text-subtle);
+      display: inline-flex; align-items: center; justify-content: center;
+    }
+    .icon-btn:hover { background: #f1f5f9; color: var(--text); }
+
+    /* Chat */
+    .chat-box {
+      display: flex; flex-direction: column; gap: 12px;
+      max-height: 460px; overflow-y: auto; padding: 4px 2px;
+    }
+    .chat-msg {
+      max-width: 86%; padding: 12px 15px; border-radius: 14px;
+      font-size: 14px; line-height: 1.6; white-space: pre-wrap; word-break: break-word;
+    }
+    .chat-msg.user {
+      align-self: flex-end; background: var(--primary); color: #fff;
+      border-bottom-right-radius: 4px;
+    }
+    .chat-msg.assistant {
+      align-self: flex-start; background: var(--surface-soft); color: var(--text);
+      border: 1px solid var(--border); border-bottom-left-radius: 4px;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed; left: 50%; bottom: 74px; transform: translateX(-50%); z-index: 80;
+      background: #022c22; color: #fff; border-radius: 12px;
+      padding: 10px 16px; font-size: 13px; font-weight: 500;
+      box-shadow: 0 12px 24px rgba(2, 44, 34, 0.28);
+      display: flex; align-items: center; gap: 12px; max-width: 92vw;
+    }
+
+    /* Footer */
+    .app-footer {
+      margin-top: 32px; background: #fff; border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 14px 18px;
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+    }
+  </style>
+<script src="/_aistudio-iframe.js?v=29045eb3"></script><script src="https://cdn.jsdelivr.net/npm/html2canvas-pro@2.0.4"></script><style>.aistudio-hover-highlight { box-shadow: inset 0 0 0 0.5px white, inset 0 0 0 1.5px rgba(128,128,128,0.6) !important; }.aistudio-active-highlight { outline: 2px solid #87a9ff !important; outline-offset: -2px !important; box-shadow: 0 0 0 0.5px rgba(0,0,0,0.3), inset 0 0 0 0.5px rgba(0,0,0,0.3) !important; }.aistudio-generating-blur { filter: blur(5px) grayscale(100%) brightness(28%) !important; transition: filter 0.3s ease; }#aistudio-focus-mode-tag { position: absolute; display: none; align-items: center; gap: 4px; background: #87a9ff; border-radius: 12px; z-index: 10000; padding: 8px; color: #32302c; font-family: Inter, sans-serif; font-size: 14px; font-style: normal; font-weight: 500; line-height: 21px; pointer-events: none; }#aistudio-hover-mode-tag { position: absolute; display: none; align-items: center; gap: 4px; background: rgba(128,128,128,0.6); border-radius: 12px; z-index: 10000; padding: 8px; color: white; font-family: Inter, sans-serif; font-size: 14px; font-style: normal; font-weight: 500; line-height: 21px; pointer-events: none; }.aistudio-img-icon { display: none; vertical-align: middle; pointer-events: auto; cursor: pointer; }.aistudio-img-icon.visible { display: inline-flex; }#aistudio-focus-mode-tag .aistudio-img-icon { position: relative; width: 26px; height: 26px; background: #32302c; border-radius: 6px; margin: -4px -4px -4px 0; }#aistudio-focus-mode-tag .aistudio-img-icon::before { content: ""; position: absolute; top: 4px; left: 4px; width: 18px; height: 18px; background-color: white; -webkit-mask-image: url("https://fonts.gstatic.com/s/i/short-term/release/googlesymbols/edit_fix_auto/default/24px.svg"); -webkit-mask-size: contain; -webkit-mask-repeat: no-repeat; mask-image: url("https://fonts.gstatic.com/s/i/short-term/release/googlesymbols/edit_fix_auto/default/24px.svg"); mask-size: contain; mask-repeat: no-repeat; }#aistudio-hover-mode-tag .aistudio-img-icon { position: relative; width: 18px; height: 18px; margin-left: 4px; }#aistudio-hover-mode-tag .aistudio-img-icon::before { content: ""; position: absolute; top: 0; left: 0; width: 18px; height: 18px; background-color: white; -webkit-mask-image: url("https://fonts.gstatic.com/s/i/short-term/release/googlesymbols/edit_fix_auto/default/24px.svg"); -webkit-mask-size: contain; -webkit-mask-repeat: no-repeat; mask-image: url("https://fonts.gstatic.com/s/i/short-term/release/googlesymbols/edit_fix_auto/default/24px.svg"); mask-size: contain; mask-repeat: no-repeat; }#aistudio-focus-mode-tag .aistudio-img-icon:hover, #aistudio-hover-mode-tag .aistudio-img-icon:hover { background: #424242 !important; }#aistudio-focus-mode-tag .aistudio-img-icon:active, #aistudio-hover-mode-tag .aistudio-img-icon:active { background: #393f51 !important; }</style></head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <button type="button" class="brand-btn" data-nav="home">GrowLab AI</button>
+      <nav class="top-nav" aria-label="주요 메뉴">
+        <button type="button" class="top-nav-btn active" data-nav="home">홈</button>
+        <button type="button" class="top-nav-btn" data-nav="plants">내 식물</button>
+        <button type="button" class="top-nav-btn" data-nav="schedule">관리 일정</button>
+        <button type="button" class="top-nav-btn" data-nav="growth">성장 기록</button>
+        <button type="button" class="top-nav-btn" data-nav="ai">AI 상담</button>
+      </nav>
+      <button type="button" class="btn btn-primary" id="btn-open-register">+ 식물 등록</button>
+    </div>
+  </header>
+
+  <main class="main-wrap">
+    <div id="app-content"></div>
+    <footer class="app-footer">
+      <div>
+        <div style="font-size:13px;font-weight:700;color:#0f172a;">GitHub / Vercel 배포용 단일 파일 패키지 (.zip)</div>
+        <div style="font-size:12px;color:#64748b;">프레임워크·빌드 없이 바로 실행 가능한 index.html과 README.md를 내려받습니다.</div>
+      </div>
+      <button type="button" class="btn btn-primary btn-sm" id="btn-download-zip">GitHub ZIP 다운로드</button>
+    </footer>
+  </main>
+
+  <nav class="bottom-nav" aria-label="하단 메뉴">
+    <div class="bottom-nav-inner">
+      <button type="button" class="bottom-nav-btn active" data-nav="home">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"></path><path d="M5 10v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V10"></path></svg>
+        <span>홈</span>
+      </button>
+      <button type="button" class="bottom-nav-btn" data-nav="plants">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 20h10"></path><path d="M10 20c5.5-2.5.8-6.4 3-10"></path><path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z"></path><path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z"></path></svg>
+        <span>내 식물</span>
+      </button>
+      <button type="button" class="bottom-nav-btn" data-nav="schedule">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M16 2v4M8 2v4M3 10h18M9 16l2 2 4-4"></path></svg>
+        <span>관리 일정</span>
+      </button>
+      <button type="button" class="bottom-nav-btn" data-nav="growth">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="m19 9-5 5-4-4-3 3"></path></svg>
+        <span>성장 기록</span>
+      </button>
+      <button type="button" class="bottom-nav-btn" data-nav="ai">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+        <span>AI 상담</span>
+      </button>
+    </div>
+  </nav>
+
+  <div id="modal-root"></div>
+  <div id="toast-root"></div>
+
+  <script>
+  (function () {
+    'use strict';
+
+    const STORAGE_KEY = 'growlab_ai_standalone_v1';
+    const LEGACY_KEYS = ['growlab_ai_state_v2', 'growlab_ai_state_v1'];
+    const SEED_PLANT_IDS = new Set(['seed-lemonbalm', 'seed-exp-pot', 'seed-tomato']);
+
+    function esc(v) {
+      return String(v == null ? '' : v)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function uid(prefix) {
+      return (prefix || 'id') + '-' + Math.random().toString(36).slice(2, 8) + '-' + Date.now().toString(36);
+    }
+
+    function makePresetSvg(bg1, bg2, leaf1, leaf2, pot, label) {
+      const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 220">'
+        + '<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">'
+        + '<stop offset="0%" stop-color="' + bg1 + '"/><stop offset="100%" stop-color="' + bg2 + '"/>'
+        + '</linearGradient></defs>'
+        + '<rect width="320" height="220" rx="18" fill="url(#g)"/>'
+        + '<circle cx="265" cy="48" r="24" fill="#ffffff" fill-opacity="0.45"/>'
+        + '<path d="M122 146h76l-10 48h-56z" fill="' + pot + '"/>'
+        + '<rect x="114" y="138" width="92" height="14" rx="7" fill="' + pot + '" opacity="0.9"/>'
+        + '<path d="M160 138V82" stroke="#166534" stroke-width="5" stroke-linecap="round"/>'
+        + '<path d="M160 110c-28-4-44-22-40-44 22 4 38 18 40 44z" fill="' + leaf1 + '"/>'
+        + '<path d="M160 100c28-6 46-24 40-46-22 4-38 20-40 46z" fill="' + leaf2 + '"/>'
+        + '<path d="M160 86c-12-22-4-40 12-52 10 18 8 36-12 52z" fill="' + leaf1 + '"/>'
+        + '<text x="160" y="208" text-anchor="middle" font-family="sans-serif" font-size="13" font-weight="700" fill="#064e3b">' + label + '</text>'
+        + '</svg>';
+      return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    }
+
+    const PLANT_PRESETS = [
+      { id: 'lemonbalm', label: '레몬밤', url: makePresetSvg('#ecfdf5', '#d1fae5', '#16a34a', '#22c55e', '#b45309', '레몬밤') },
+      { id: 'experiment', label: '실험 화분', url: makePresetSvg('#f0fdf4', '#dcfce7', '#15803d', '#65a30d', '#475569', '실험 화분') },
+      { id: 'tomato', label: '방울토마토', url: makePresetSvg('#fffbeb', '#fef3c7', '#16a34a', '#ef4444', '#9a3412', '방울토마토') },
+      { id: 'basil', label: '바질', url: makePresetSvg('#f7fee7', '#d9f99d', '#15803d', '#4d7c0f', '#92400e', '바질') }
+    ];
+
+    const CATEGORY_META = {
+      herb: { label: '허브', icon: '🌿' },
+      leafy: { label: '엽채류', icon: '🥬' },
+      fruiting: { label: '열매채소', icon: '🍅' },
+      houseplant: { label: '관엽식물', icon: '🪴' },
+      succulent: { label: '다육/선인장', icon: '🌵' },
+      other: { label: '기타', icon: '🌱' }
+    };
+
+    const STAGE_LABELS = {
+      seedling: '새싹',
+      vegetative: '성장기',
+      flowering: '개화기',
+      fruiting: '결실기',
+      dormant: '휴면기'
+    };
+
+    const MOISTURE_OPTIONS = ['건조', '약간 건조', '적정(촉촉함)', '과습'];
+    const CARE_TYPE_LABELS = {
+      water: '물 주기',
+      pressure: '토양 압력',
+      ph: '토양 pH',
+      temp: '온도 점검',
+      note: '관찰 메모'
+    };
+
+    const ICONS = {
+      check: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+      alert: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>',
+      droplet: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>',
+      thermometer: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg>',
+      flask: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v7.31"/><path d="M14 9.3V1.99"/><path d="M8.5 2h7"/><path d="M14 9.3a6.5 6.5 0 1 1-4 0"/><path d="M5.52 16h12.96"/></svg>',
+      gauge: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg>',
+      x: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>'
+    };
+
+    function getTodayStr() {
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return y + '-' + m + '-' + day;
+    }
+
+    function isValidDateStr(dateStr) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr || '')) return false;
+      const parts = dateStr.split('-').map(Number);
+      const d = new Date(parts[0], parts[1] - 1, parts[2]);
+      return d.getFullYear() === parts[0] && d.getMonth() === parts[1] - 1 && d.getDate() === parts[2];
+    }
+
+    function parseLocalDate(dateStr) {
+      if (!isValidDateStr(dateStr)) return null;
+      const p = dateStr.split('-').map(Number);
+      return new Date(p[0], p[1] - 1, p[2]);
+    }
+
+    function addDays(dateStr, days) {
+      const base = parseLocalDate(dateStr) || parseLocalDate(getTodayStr());
+      const next = new Date(base);
+      next.setDate(next.getDate() + Math.round(Number(days) || 0));
+      return next.getFullYear() + '-' + String(next.getMonth() + 1).padStart(2, '0') + '-' + String(next.getDate()).padStart(2, '0');
+    }
+
+    function diffDaysFromToday(targetDateStr) {
+      const target = parseLocalDate(targetDateStr);
+      const today = parseLocalDate(getTodayStr());
+      if (!target || !today) return null;
+      return Math.round((target.getTime() - today.getTime()) / 86400000);
+    }
+
+    function formatKoreanDate(dateStr) {
+      if (!isValidDateStr(dateStr)) return dateStr || '-';
+      const p = dateStr.split('-').map(Number);
+      return p[1] + '월 ' + p[2] + '일';
+    }
+
+    function formatDueBadge(dateStr) {
+      const diff = diffDaysFromToday(dateStr);
+      if (diff === null) return '일정 미정';
+      if (diff < 0) return Math.abs(diff) + '일 지남';
+      if (diff === 0) return '오늘';
+      if (diff === 1) return '내일';
+      return diff + '일 후';
+    }
+
+    function computeNextWateringCheckDate(plant) {
+      if (plant.nextWaterCheckOverride && isValidDateStr(plant.nextWaterCheckOverride)) {
+        return plant.nextWaterCheckOverride;
+      }
+      if (!isValidDateStr(plant.lastWateredDate)) return null;
+      return addDays(plant.lastWateredDate, Math.max(1, Number(plant.wateringIntervalDays) || 3));
+    }
+
+    function normalizePlantSchedules(plant) {
+      const out = Object.assign({}, plant);
+      if (!out.nextWaterCheckOverride && isValidDateStr(out.lastWateredDate)) {
+        out.nextWaterCheckOverride = addDays(out.lastWateredDate, Math.max(1, Number(out.wateringIntervalDays) || 3));
+      }
+      if (out.soilPressureEnabled && !out.nextPressureDate) {
+        const base = isValidDateStr(out.lastPressureDate) ? out.lastPressureDate : (isValidDateStr(out.startDate) ? out.startDate : getTodayStr());
+        out.nextPressureDate = addDays(base, Math.max(1, Number(out.pressureIntervalDays) || 7));
+      }
+      return out;
+    }
+
+    function evaluateWateringStatus(plant) {
+      const nextDate = computeNextWateringCheckDate(plant);
+      const diff = nextDate ? diffDaysFromToday(nextDate) : null;
+      const isDue = diff !== null && diff <= 0;
+
+      if (plant.soilMoisture === '과습') {
+        return {
+          level: 'danger',
+          badge: '과습 주의',
+          action: '급수 중단 · 배수/통풍 확인',
+          shouldWaterNow: false,
+          reason: '현재 토양이 과습 상태이므로 절대 물을 주지 말고 배수와 통풍을 먼저 확인하세요.'
+        };
+      }
+      if (plant.soilMoisture === '적정(촉촉함)') {
+        return {
+          level: isDue ? 'warning' : 'good',
+          badge: isDue ? '확인일 도래(촉촉함)' : '수분 적정',
+          action: isDue ? '급수 보류 · 내일 다시 촉촉함 확인' : '현재 수분 적정 · 급수 보류',
+          shouldWaterNow: false,
+          reason: isDue
+            ? '예정 확인일이 되었지만 흙이 아직 촉촉합니다. 과습을 막기 위해 오늘 급수는 보류하고 내일 다시 확인하세요.'
+            : '토양이 촉촉한 상태이므로 다음 점검일까지 물을 주지 않는 것이 좋습니다.'
+        };
+      }
+      if (plant.soilMoisture === '건조') {
+        return {
+          level: 'danger',
+          badge: '토양 건조',
+          action: '오늘 물 주기 권장',
+          shouldWaterNow: true,
+          reason: '겉흙과 속흙이 건조하므로 배수구로 물이 살짝 나올 만큼 충분히 급수해 주세요.'
+        };
+      }
+      if (isDue) {
+        return {
+          level: 'warning',
+          badge: diff < 0 ? '확인 ' + Math.abs(diff) + '일 지남' : '오늘 물 확인',
+          action: '겉흙 확인 후 필요 시 급수',
+          shouldWaterNow: true,
+          reason: '약간 건조한 상태에서 급수 주기가 도래했습니다. 겉흙 2~3cm가 말랐는지 확인하고 물을 주세요.'
+        };
+      }
+      return {
+        level: 'good',
+        badge: nextDate ? formatDueBadge(nextDate) + ' 확인' : '상태 양호',
+        action: '주기 도래 전 수분 관찰',
+        shouldWaterNow: false,
+        reason: '현재 약간 건조한 단계이며 예정 확인일에 맞춰 상태를 다시 점검하면 됩니다.'
+      };
+    }
+
+    function evaluateEnvironment(plant) {
+      const guide = plant.aiGuide || {};
+      const tempMin = typeof guide.optimalTempMin === 'number' ? guide.optimalTempMin : null;
+      const tempMax = typeof guide.optimalTempMax === 'number' ? guide.optimalTempMax : null;
+      const phMin = typeof guide.optimalPhMin === 'number' ? guide.optimalPhMin : null;
+      const phMax = typeof guide.optimalPhMax === 'number' ? guide.optimalPhMax : null;
+
+      let tempStatus = 'unknown', tempLabel = '기준 미설정', tempDeltaText = 'AI 생육 가이드 생성 후 비교 가능';
+      if (typeof plant.currentTempC === 'number' && tempMin !== null && tempMax !== null) {
+        if (plant.currentTempC < tempMin) {
+          const d = (tempMin - plant.currentTempC).toFixed(1).replace(/\.0$/, '');
+          tempStatus = Number(d) >= 4 ? 'danger' : 'warning';
+          tempLabel = '적정보다 ' + d + '°C 낮음';
+          tempDeltaText = '적정 ' + tempMin + '~' + tempMax + '°C 대비 ' + d + '°C 낮습니다. 따뜻한 창가나 보온을 고려하세요.';
+        } else if (plant.currentTempC > tempMax) {
+          const d = (plant.currentTempC - tempMax).toFixed(1).replace(/\.0$/, '');
+          tempStatus = Number(d) >= 4 ? 'danger' : 'warning';
+          tempLabel = '적정보다 ' + d + '°C 높음';
+          tempDeltaText = '적정 ' + tempMin + '~' + tempMax + '°C 대비 ' + d + '°C 높습니다. 환기나 반그늘 이동이 필요합니다.';
+        } else {
+          tempStatus = 'good';
+          tempLabel = '적정 범위';
+          tempDeltaText = '적정 범위(' + tempMin + '~' + tempMax + '°C) 안에 잘 유지되고 있습니다.';
+        }
+      }
+
+      let phStatus = 'unknown', phLabel = '기준 미설정', phDeltaText = 'AI 생육 가이드 생성 후 비교 가능';
+      if (typeof plant.currentPh === 'number' && phMin !== null && phMax !== null) {
+        if (plant.currentPh < phMin) {
+          const d = (phMin - plant.currentPh).toFixed(1);
+          phStatus = Number(d) >= 0.7 ? 'danger' : 'warning';
+          phLabel = '적정보다 pH ' + d + ' 낮음(산성)';
+          phDeltaText = '적정 pH ' + phMin + '~' + phMax + '보다 산성입니다. 배수 확인 및 중성 배양토 보충을 검토하세요.';
+        } else if (plant.currentPh > phMax) {
+          const d = (plant.currentPh - phMax).toFixed(1);
+          phStatus = Number(d) >= 0.7 ? 'danger' : 'warning';
+          phLabel = '적정보다 pH ' + d + ' 높음(알칼리)';
+          phDeltaText = '적정 pH ' + phMin + '~' + phMax + '보다 높습니다. 피트모스 혼합 또는 중성수 관수를 권장합니다.';
+        } else {
+          phStatus = 'good';
+          phLabel = '적정 범위';
+          phDeltaText = '적정 토양 pH(' + phMin + '~' + phMax + ') 범위에 있습니다.';
+        }
+      }
+
+      return { tempStatus, tempLabel, tempDeltaText, phStatus, phLabel, phDeltaText };
+    }
+
+    function getOverallPlantStatus(plant) {
+      const w = evaluateWateringStatus(plant);
+      const env = evaluateEnvironment(plant);
+      if (w.level === 'danger' || env.tempStatus === 'danger' || env.phStatus === 'danger') {
+        return { level: 'danger', label: '점검 필요' };
+      }
+      if (w.level === 'warning' || env.tempStatus === 'warning' || env.phStatus === 'warning') {
+        return { level: 'warning', label: '관찰 권장' };
+      }
+      return { level: 'good', label: '건강 양호' };
+    }
+
+    function buildDailyTasks(plants) {
+      const tasks = [];
+      plants.forEach(function (plant) {
+        const w = evaluateWateringStatus(plant);
+        const nextWaterDate = computeNextWateringCheckDate(plant);
+        const waterDiff = nextWaterDate ? diffDaysFromToday(nextWaterDate) : null;
+
+        if (w.level === 'danger' || (waterDiff !== null && waterDiff <= 3)) {
+          const isOver = plant.soilMoisture === '과습';
+          const isDry = plant.soilMoisture === '건조';
+          const isDue = waterDiff !== null && waterDiff <= 0;
+          const priority = isOver || isDry || (waterDiff !== null && waterDiff < 0)
+            ? 'urgent' : isDue ? 'today' : 'upcoming';
+          tasks.push({
+            id: plant.id + '-water',
+            plantId: plant.id,
+            plantName: plant.name,
+            species: plant.species,
+            category: 'water',
+            priority: priority,
+            dueDate: nextWaterDate || getTodayStr(),
+            title: isOver ? '과습 점검 · 배수 확인' : isDry ? '긴급 물 주기 (토양 건조)' : w.shouldWaterNow ? '물 주기 및 토양 수분 확인' : '토양 수분 재확인 (급수 보류 권장)',
+            description: w.reason,
+            badgeText: nextWaterDate ? formatDueBadge(nextWaterDate) : w.badge
+          });
+        }
+
+        if (plant.soilPressureEnabled && plant.nextPressureDate) {
+          const pDiff = diffDaysFromToday(plant.nextPressureDate);
+          if (pDiff !== null && pDiff <= 3) {
+            tasks.push({
+              id: plant.id + '-pressure',
+              plantId: plant.id,
+              plantName: plant.name,
+              species: plant.species,
+              category: 'pressure',
+              priority: pDiff < 0 ? 'urgent' : pDiff === 0 ? 'today' : 'upcoming',
+              dueDate: plant.nextPressureDate,
+              title: '토양 압력(' + (plant.targetPressureKpa != null ? plant.targetPressureKpa + ' kPa' : '설정 조건') + ') 점검 및 유지',
+              description: plant.pressureConditionNote || '설정한 재배 실험 압력 조건이 유지되고 있는지 확인하세요.',
+              badgeText: formatDueBadge(plant.nextPressureDate)
+            });
+          }
+        }
+
+        const env = evaluateEnvironment(plant);
+        if (env.phStatus === 'warning' || env.phStatus === 'danger') {
+          tasks.push({
+            id: plant.id + '-ph',
+            plantId: plant.id,
+            plantName: plant.name,
+            species: plant.species,
+            category: 'ph',
+            priority: env.phStatus === 'danger' ? 'urgent' : 'today',
+            dueDate: getTodayStr(),
+            title: '토양 pH 조정 및 재측정 (' + env.phLabel + ')',
+            description: env.phDeltaText,
+            badgeText: 'pH ' + plant.currentPh
+          });
+        }
+        if (env.tempStatus === 'warning' || env.tempStatus === 'danger') {
+          tasks.push({
+            id: plant.id + '-temp',
+            plantId: plant.id,
+            plantName: plant.name,
+            species: plant.species,
+            category: 'temp',
+            priority: env.tempStatus === 'danger' ? 'urgent' : 'today',
+            dueDate: getTodayStr(),
+            title: '주변 온도 조절 (' + env.tempLabel + ')',
+            description: env.tempDeltaText,
+            badgeText: plant.currentTempC + '°C'
+          });
+        }
+      });
+
+      const rank = { urgent: 0, today: 1, upcoming: 2 };
+      return tasks.sort(function (a, b) {
+        if (rank[a.priority] !== rank[b.priority]) return rank[a.priority] - rank[b.priority];
+        return (a.dueDate || '').localeCompare(b.dueDate || '');
+      });
+    }
+
+    /* Built-in Botanical Knowledge Base & AI Guide Engine (Offline & Zero-Dependency) */
+    const SPECIES_DB = [
+      { keys: ['바질', 'basil'], tMin: 20, tMax: 28, pMin: 6.0, pMax: 7.0, water: 2, sun: '하루 5~6시간 이상 밝은 햇빛과 따뜻한 통풍', press: '배수와 통기성이 좋은 가벼운 흙을 선호하므로 과도한 답압을 피하세요.', note: '찬 바람(15°C 이하)에 잎이 검게 변할 수 있으며, 꽃대가 올라오면 잎 수확량이 줄어듭니다.' },
+      { keys: ['레몬밤', 'lemon', '민트', '로즈마리', '허브'], tMin: 18, tMax: 25, pMin: 6.0, pMax: 7.2, water: 3, sun: '밝은 간접광~반양지, 시원한 바람 통풍', press: '뿌리 호흡이 활발하므로 흙이 지나치게 단단히 눌리지 않게 관리하세요.', note: '겉흙이 마른 것을 확인한 뒤 충분히 주되, 받침에 물이 고이지 않게 비워 주세요.' },
+      { keys: ['토마토', '방울토마토', '고추', '오이', '딸기'], tMin: 20, tMax: 27, pMin: 6.0, pMax: 6.8, water: 2, sun: '하루 6시간 이상 충분한 직사광선', press: '열매가 커질수록 뿌리 지지력이 필요하지만 과도한 압력은 뿌리 신장을 방해합니다.', note: '토양 pH가 너무 낮아지면 칼슘 결핍(배꼽썩음병) 위험이 커지므로 pH 6.0 이상을 권장합니다.' },
+      { keys: ['상추', '청경채', '시금치', '루꼴라', '케일', '쌈'], tMin: 15, tMax: 22, pMin: 6.0, pMax: 7.0, water: 2, sun: '반양지~밝은 창가, 한낮 직사광은 차광 권장', press: '천근성(얕은 뿌리)이므로 겉흙이 딱딱하게 굳지 않도록 가볍게 유지하세요.', note: '25°C 이상의 고온에서는 잎이 쓰거나 웃자람·추대가 빨라질 수 있습니다.' },
+      { keys: ['다육', '선인장', '알로에', '스투키', '에케베리아'], tMin: 18, tMax: 28, pMin: 5.8, pMax: 6.8, water: 10, sun: '통풍이 잘되는 밝은 햇빛 (장마철 습기 주의)', press: '마사토 비율이 높아 배수가 빨라야 하며, 뿌리 주변 흙이 뭉치지 않게 관리합니다.', note: '속흙까지 완전히 바짝 마른 뒤 1~2일 기다렸다가 주는 것이 과습 예방의 핵심입니다.' },
+      { keys: ['몬스테라', '스킨답서스', '고무나무', '안스리움', '관엽', '금전수', '산세베리아'], tMin: 18, tMax: 26, pMin: 5.8, pMax: 6.8, water: 5, sun: '직사광선을 피한 밝은 간접광과 실내 순환 통풍', press: '공중뿌리·굵은 뿌리가 숨 쉬기 좋게 배합토의 공극률을 유지하세요.', note: '실내에서는 계절에 따라 증발량이 크게 달라지므로 날짜보다 흙 상태를 우선 확인하세요.' }
+    ];
+
+    const CATEGORY_DEFAULTS = {
+      herb: { tMin: 18, tMax: 25, pMin: 6.0, pMax: 7.0, water: 3, sun: '하루 4~6시간 밝은 빛과 원활한 통풍', press: '배수성과 통기성을 유지해 뿌리 호흡을 도우세요.' },
+      leafy: { tMin: 15, tMax: 22, pMin: 6.0, pMax: 7.0, water: 2, sun: '밝은 간접광~오전 햇빛, 고온 주의', press: '연약한 잎과 뿌리를 위해 지나친 토양 압착을 피하세요.' },
+      fruiting: { tMin: 20, tMax: 27, pMin: 6.0, pMax: 6.8, water: 2, sun: '하루 6시간 이상 충분한 햇빛과 지지대 확인', press: '수분과 영양 흡수가 활발하도록 흙의 공극을 적절히 유지하세요.' },
+      houseplant: { tMin: 18, tMax: 26, pMin: 5.8, pMax: 6.8, water: 5, sun: '직사광선 피한 밝은 간접광', press: '배수구가 막히지 않도록 성긴 배합토 상태를 유지하세요.' },
+      succulent: { tMin: 18, tMax: 28, pMin: 5.8, pMax: 6.8, water: 10, sun: '통풍 좋은 밝은 창가', press: '배수성 위주의 성긴 흙을 유지해 과습을 예방하세요.' },
+      other: { tMin: 18, tMax: 25, pMin: 6.0, pMax: 7.0, water: 4, sun: '식물 잎 상태를 관찰하며 밝은 간접광 배치', press: '재배 실험 조건이 없다면 일반적인 배수성 토양을 권장합니다.' }
+    };
+
+    function generateBotanicalGuide(plant) {
+      const speciesText = (plant.species || plant.name || '').toLowerCase();
+      let matched = null;
+      for (let i = 0; i < SPECIES_DB.length; i++) {
+        if (SPECIES_DB[i].keys.some(function (k) { return speciesText.indexOf(k) !== -1; })) {
+          matched = SPECIES_DB[i];
+          break;
+        }
+      }
+      const base = matched || CATEGORY_DEFAULTS[plant.category] || CATEGORY_DEFAULTS.other;
+      let tMin = base.tMin;
+      let tMax = base.tMax;
+      let waterDays = base.water;
+      let stageAdvice = '';
+
+      if (plant.growthStage === 'seedling') {
+        tMin = Math.min(tMax - 2, tMin + 1);
+        waterDays = Math.max(1, Math.round(waterDays * 0.7));
+        stageAdvice = '새싹 단계는 뿌리가 얕아 겉흙 건조에 민감하므로 흙 표면이 마르지 않게 약한 분무·저면 위주로 살펴보세요.';
+      } else if (plant.growthStage === 'vegetative') {
+        stageAdvice = '성장기에는 잎과 줄기가 빠르게 자라므로 충분한 빛과 일정한 물 주기 리듬이 중요합니다.';
+      } else if (plant.growthStage === 'flowering') {
+        stageAdvice = '개화기에는 급격한 온도 변화나 과습을 피하고 환기를 자주 해 꽃떨어짐을 줄여 주세요.';
+      } else if (plant.growthStage === 'fruiting') {
+        waterDays = Math.max(1, waterDays - 1);
+        stageAdvice = '결실기에는 수분과 영양 요구량이 늘어나므로 토양 수분 편차를 줄이고 pH 6.0 이상을 안정적으로 유지하세요.';
+      } else {
+        waterDays = Math.min(30, Math.round(waterDays * 1.5));
+        stageAdvice = '휴면기에는 증발·흡수량이 크게 줄어드므로 물 주기 간격을 넉넉히 늘려 과습을 예방하세요.';
+      }
+
+      const uncertaintyNotes = matched
+        ? (plant.soilPressureEnabled ? '토양 압력(' + (plant.targetPressureKpa != null ? plant.targetPressureKpa + ' kPa' : '사용자 설정') + ')에 따른 생육 반응은 품종·배양토 배합마다 다르므로 대조군과 함께 직접 측정값을 비교해 확인하세요.' : null)
+        : '입력하신 품종("' + (plant.species || plant.name) + '")에 대한 세부 품종 데이터베이스가 충분하지 않아 "' + (CATEGORY_META[plant.category] ? CATEGORY_META[plant.category].label : '기타') + '" 분류의 일반 권장 기준으로 안내했습니다. 실제 잎 처짐·흙 마름 속도를 보며 수치를 미세 조정해 주세요.';
+
+      return {
+        optimalTempMin: tMin,
+        optimalTempMax: tMax,
+        optimalPhMin: base.pMin,
+        optimalPhMax: base.pMax,
+        optimalMoistureText: plant.category === 'succulent'
+          ? '속흙까지 완전히 마른 뒤 급수 (건조~약간 건조 권장)'
+          : '겉흙 2~3cm가 말랐을 때 충분히 급수 후 배수',
+        recommendedWateringDays: waterDays,
+        sunlightVentilation: base.sun,
+        pressureManagementNote: plant.soilPressureEnabled
+          ? '설정하신 실험 압력(' + (plant.targetPressureKpa != null ? plant.targetPressureKpa + ' kPa' : '사용자 설정') + ')을 일정하게 유지하면서 대조군과 키·잎 수·뿌리 활력을 비교하세요. ' + base.press
+          : base.press,
+        stageSpecificTip: stageAdvice + (matched && matched.note ? ' ' + matched.note : ''),
+        uncertaintyNotes: uncertaintyNotes,
+        updatedAt: new Date().toISOString()
+      };
+    }
+
+    function generateBotanicalCounsel(question, plant, allPlants) {
+      const q = (question || '').trim().toLowerCase();
+      const lines = [];
+
+      if (plant) {
+        const w = evaluateWateringStatus(plant);
+        const env = evaluateEnvironment(plant);
+        lines.push('[' + plant.name + ' (' + plant.species + ' · ' + (STAGE_LABELS[plant.growthStage] || plant.growthStage) + ') 기준 분석]');
+        lines.push('• 현재 상태 요약: 토양 수분 "' + plant.soilMoisture + '" / 온도 ' + (plant.currentTempC != null ? plant.currentTempC + '°C (' + env.tempLabel + ')' : '미입력') + ' / 토양 pH ' + (plant.currentPh != null ? plant.currentPh + ' (' + env.phLabel + ')' : '미입력'));
+
+        if (/물|수분|과습|시들|노랗|갈변|마르|잎/.test(q)) {
+          lines.push('');
+          lines.push('1) 물 주기 & 뿌리 산소 원리');
+          lines.push('• ' + w.reason);
+          if (plant.soilMoisture === '과습' || plant.soilMoisture === '적정(촉촉함)') {
+            lines.push('• 흙 속 공극이 물로 꽉 차면 뿌리가 산소를 흡수하지 못해(뿌리 저산소 스트레스) 잎이 노랗게 변하거나 오히려 축 처질 수 있습니다. 현재 상태에서는 물을 더 주지 않는 것이 안전합니다.');
+          } else {
+            lines.push('• 손가락이나 나무젓가락으로 흙 2~3cm 깊이를 찔러 보송하게 마른 것이 확인되면 화분 바닥 배수구로 물이 살짝 흐를 때까지 주세요.');
+          }
+        }
+        if (/ph|산성|알칼리|양분|비료|영양/.test(q)) {
+          lines.push('');
+          lines.push('2) 토양 pH와 양분 흡수');
+          lines.push('• ' + env.phDeltaText);
+          lines.push('• 식물은 토양 pH 6.0~6.8 부근에서 질소·인·칼륨·칼슘 등 주요 무기양분 이온이 가장 잘 녹아 뿌리로 흡수됩니다. pH가 급격히 변하지 않도록 한 번에 크게 바꾸기보다 소량씩 조정한 뒤 3~5일 후 재측정하세요.');
+        }
+        if (/온도|추위|더위|햇빛|광합성|통풍|환기/.test(q)) {
+          lines.push('');
+          lines.push('3) 온도·빛·통풍 관리');
+          lines.push('• ' + env.tempDeltaText);
+          if (plant.aiGuide && plant.aiGuide.sunlightVentilation) {
+            lines.push('• 권장 광·통풍 조건: ' + plant.aiGuide.sunlightVentilation);
+          }
+        }
+        if (/압력|kpa|눌|다짐|실험|비교|대조/.test(q)) {
+          lines.push('');
+          lines.push('4) 토양 압력 및 재배 실험 설계 팁');
+          if (plant.soilPressureEnabled) {
+            lines.push('• 현재 실험 조건: 목표 압력 ' + (plant.targetPressureKpa != null ? plant.targetPressureKpa + ' kPa' : '설정됨') + ', ' + (plant.pressureIntervalDays || 7) + '일마다 점검.');
+          }
+          lines.push('• 토양 압력이 높아지면 흙 알갱이 사이 공극(빈 공간)이 줄어들어 물 빠짐과 산소 공급이 감소할 수 있습니다. 실험군과 대조군의 햇빛·물 주기·온도를 최대한 같게 맞추고 압력 조건만 다르게 유지해야 정확한 비교가 가능합니다.');
+        }
+        if (lines.length <= 2) {
+          lines.push('');
+          lines.push('1) 오늘 바로 실행할 관리 포인트');
+          lines.push('• 물 관리: ' + w.action + ' (' + w.reason + ')');
+          lines.push('• 환경 점검: ' + env.tempDeltaText + ' / ' + env.phDeltaText);
+          if (plant.aiGuide && plant.aiGuide.stageSpecificTip) {
+            lines.push('• 생육 단계 팁: ' + plant.aiGuide.stageSpecificTip);
+          }
+        }
+        lines.push('');
+        lines.push('※ 잎 색상, 줄기 탄력, 흙 마름 속도를 성장 기록에 사진과 함께 남기면 변화 원인을 훨씬 정확히 추적할 수 있습니다.');
+      } else {
+        lines.push('[일반 식물 관리 & 재배 실험 조언]');
+        if (allPlants.length === 0) {
+          lines.push('현재 등록된 식물이 없습니다. 우측 상단 "+ 식물 등록"에서 재배할 식물을 추가하면 해당 식물의 온도·pH·수분 수치를 바탕으로 더 구체적인 맞춤 답변을 드릴 수 있습니다.');
+        }
+        lines.push('• 물 주기 기본 원칙: 정해진 날짜만 보고 기계적으로 물을 주기보다 겉흙 2~3cm의 실제 건조 여부를 먼저 확인하세요. 흙이 촉촉하거나 과습할 때는 급수를 보류해야 뿌리 부패를 막을 수 있습니다.');
+        lines.push('• 실험 변인 통제: 토양 압력(kPa)이나 pH 실험을 진행할 때는 한 번에 여러 조건을 바꾸지 말고, 실험군과 대조군에 같은 빛·온도·급수 기준을 적용한 뒤 3~7일 간격으로 키(cm)와 잎 개수를 기록해 비교하세요.');
+      }
+
+      return lines.join('\n');
+    }
+
+    /* Storage & Safe Migration (Starts completely empty by default) */
+    function loadState() {
+      const defaults = {
+        activeTab: 'home',
+        plants: [],
+        growthRecords: [],
+        careLogs: [],
+        chatMessages: [],
+        selectedPlantId: null,
+        aiContextPlantId: null,
+        scheduleFilter: 'all',
+        schedulePriorityFilter: 'all',
+        homeTaskCategoryFilter: 'all',
+        growthSelectedPlantId: null,
+        growthCompareMode: false,
+        growthCompareIds: [],
+        growthMetric: 'heightCm'
+      };
+
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          const plants = Array.isArray(parsed.plants) ? parsed.plants.map(normalizePlantSchedules) : [];
+          return Object.assign({}, defaults, parsed, {
+            plants: plants,
+            growthRecords: Array.isArray(parsed.growthRecords) ? parsed.growthRecords : [],
+            careLogs: Array.isArray(parsed.careLogs) ? parsed.careLogs : [],
+            chatMessages: Array.isArray(parsed.chatMessages) ? parsed.chatMessages : [],
+            growthCompareIds: Array.isArray(parsed.growthCompareIds) ? parsed.growthCompareIds : []
+          });
+        }
+
+        for (let i = 0; i < LEGACY_KEYS.length; i++) {
+          const legacyRaw = localStorage.getItem(LEGACY_KEYS[i]);
+          if (!legacyRaw) continue;
+          const parsed = JSON.parse(legacyRaw);
+          const nonSeedPlants = (Array.isArray(parsed.plants) ? parsed.plants : [])
+            .filter(function (p) { return p && p.id && !SEED_PLANT_IDS.has(p.id); })
+            .map(normalizePlantSchedules);
+          const validIds = new Set(nonSeedPlants.map(function (p) { return p.id; }));
+          const migrated = Object.assign({}, defaults, {
+            plants: nonSeedPlants,
+            growthRecords: (Array.isArray(parsed.growthRecords) ? parsed.growthRecords : []).filter(function (r) { return validIds.has(r.plantId); }),
+            careLogs: (Array.isArray(parsed.careLogs) ? parsed.careLogs : []).filter(function (l) { return validIds.has(l.plantId); }),
+            chatMessages: Array.isArray(parsed.chatMessages) ? parsed.chatMessages : []
+          });
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(migrated));
+          return migrated;
+        }
+      } catch (e) {
+        console.warn('저장된 상태 불러오기 실패:', e);
+      }
+      return defaults;
+    }
+
+    let state = loadState();
+    let toastTimer = null;
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          plants: state.plants,
+          growthRecords: state.growthRecords,
+          careLogs: state.careLogs,
+          chatMessages: state.chatMessages.slice(-40)
+        }));
+      } catch (e) {
+        showToast('저장 공간이 부족합니다. 사진 크기를 줄여 주세요.', 'danger');
+      }
+    }
+
+    function showToast(msg) {
+      const root = document.getElementById('toast-root');
+      if (!root) return;
+      root.innerHTML = '<div class="toast" role="status"><span>' + esc(msg) + '</span><button type="button" id="toast-close" style="background:none;border:0;color:#a7f3d0;font-weight:700;">닫기</button></div>';
+      const btn = document.getElementById('toast-close');
+      if (btn) btn.onclick = function () { root.innerHTML = ''; };
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(function () { root.innerHTML = ''; }, 3600);
+    }
+
+    function compressImageFile(file) {
+      return new Promise(function (resolve, reject) {
+        if (!file || !file.type || file.type.indexOf('image/') !== 0) {
+          reject(new Error('이미지 파일만 업로드할 수 있습니다.'));
+          return;
+        }
+        const reader = new FileReader();
+        reader.onerror = function () { reject(new Error('파일을 읽을 수 없습니다.')); };
+        reader.onload = function () {
+          const img = new Image();
+          img.onerror = function () { reject(new Error('이미지를 불러오지 못했습니다.')); };
+          img.onload = function () {
+            const maxDim = 640;
+            const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.max(1, Math.round(img.width * scale));
+            canvas.height = Math.max(1, Math.round(img.height * scale));
+            const ctx = canvas.getContext('2d');
+            if (!ctx) { resolve(reader.result); return; }
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            resolve(canvas.toDataURL('image/jpeg', 0.78));
+          };
+          img.src = reader.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function statusTag(level, text) {
+      const cls = level === 'danger' ? 'status-danger' : level === 'warning' ? 'status-warning' : 'status-good';
+      const icon = level === 'good' ? ICONS.check : ICONS.alert;
+      return '<span class="status-tag ' + cls + '">' + icon + '<span>' + esc(text) + '</span></span>';
+    }
+
+    function getPlantById(id) {
+      for (let i = 0; i < state.plants.length; i++) {
+        if (state.plants[i].id === id) return state.plants[i];
+      }
+      return null;
+    }
+
+    function completeDailyTask(task) {
+      const plant = getPlantById(task.plantId);
+      if (!plant) return;
+      const today = getTodayStr();
+      let updated = Object.assign({}, plant);
+      let logSummary = '';
+
+      if (task.category === 'water') {
+        const w = evaluateWateringStatus(plant);
+        if (!w.shouldWaterNow) {
+          updated.nextWaterCheckOverride = addDays(today, 1);
+          logSummary = '오늘 급수 보류 (' + plant.soilMoisture + ') · 내일 재확인 예약';
+        } else {
+          updated.lastWateredDate = today;
+          updated.soilMoisture = '적정(촉촉함)';
+          updated.nextWaterCheckOverride = addDays(today, Math.max(1, Number(plant.wateringIntervalDays) || 3));
+          logSummary = '물 주기 완료 · 토양 수분 적정(촉촉함)으로 기록';
+        }
+      } else if (task.category === 'pressure') {
+        updated.lastPressureDate = today;
+        updated.nextPressureDate = addDays(today, Math.max(1, Number(plant.pressureIntervalDays) || 7));
+        logSummary = '토양 압력 점검 완료 (' + (plant.targetPressureKpa != null ? plant.targetPressureKpa + ' kPa' : '조건 유지') + ')';
+      } else if (task.category === 'ph') {
+        const guide = plant.aiGuide || {};
+        if (typeof guide.optimalPhMin === 'number' && typeof guide.optimalPhMax === 'number') {
+          updated.currentPh = Number(((guide.optimalPhMin + guide.optimalPhMax) / 2).toFixed(1));
+        }
+        logSummary = '토양 pH 점검 및 적정 범위 조정 (pH ' + updated.currentPh + ')';
+      } else if (task.category === 'temp') {
+        const guide = plant.aiGuide || {};
+        if (typeof guide.optimalTempMin === 'number' && typeof guide.optimalTempMax === 'number') {
+          updated.currentTempC = Math.round((guide.optimalTempMin + guide.optimalTempMax) / 2);
+        }
+        logSummary = '주변 온도 조절 완료 (' + updated.currentTempC + '°C)';
+      }
+
+      state.plants = state.plants.map(function (p) { return p.id === updated.id ? updated : p; });
+      state.careLogs = [{
+        id: uid('log'),
+        plantId: plant.id,
+        date: today,
+        type: task.category,
+        summary: logSummary,
+        createdAt: new Date().toISOString()
+      }].concat(state.careLogs).slice(0, 120);
+      saveState();
+      showToast(plant.name + ': ' + logSummary);
+      render();
+    }
+
+    function setTab(tab) {
+      state.activeTab = tab;
+      if (tab !== 'plants') state.selectedPlantId = null;
+      render();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function renderHome() {
+      const plants = state.plants;
+      const tasks = buildDailyTasks(plants);
+      const urgentCount = tasks.filter(function (t) { return t.priority === 'urgent'; }).length;
+      const todayCount = tasks.filter(function (t) { return t.priority === 'today'; }).length;
+      const upcomingCount = tasks.filter(function (t) { return t.priority === 'upcoming'; }).length;
+      const dueNow = urgentCount + todayCount;
+      const filterCat = state.homeTaskCategoryFilter || 'all';
+      const filteredTasks = filterCat === 'all' ? tasks : tasks.filter(function (t) { return t.category === filterCat; });
+
+      const catBtns = [
+        ['all', '전체'],
+        ['water', '물 주기'],
+        ['ph', '토양 pH 측정'],
+        ['temp', '온도 확인'],
+        ['pressure', '토양 압력 점검']
+      ].map(function (item) {
+        return '<button type="button" class="filter-btn ' + (filterCat === item[0] ? 'active' : '') + '" data-home-cat="' + item[0] + '">' + item[1] + '</button>';
+      }).join('');
+
+      let taskSummaryHtml = '';
+      if (plants.length === 0) {
+        taskSummaryHtml = '<div class="card-dashed">'
+          + '<h2 class="hero-title" style="margin-bottom:8px;">아직 등록된 식물이 없습니다</h2>'
+          + '<p class="muted" style="font-size:14px;max-width:460px;margin:0 auto 16px;">임의의 샘플 식물은 자동으로 추가하지 않습니다. 직접 키우거나 실험 중인 식물을 등록하면 맞춤 생육 기준과 관리 일정이 생성됩니다.</p>'
+          + '<button type="button" class="btn btn-primary" data-action="open-register">+ 첫 식물 등록하기</button>'
+          + '</div>';
+      } else {
+        const taskListHtml = filteredTasks.length === 0
+          ? '<div class="sub-box" style="text-align:center;padding:20px;font-size:13px;color:#64748b;">선택한 카테고리에 예정된 긴급·임박 작업이 없습니다.</div>'
+          : filteredTasks.slice(0, 6).map(function (t) {
+              const pTag = t.priority === 'urgent'
+                ? statusTag('danger', '1순위 긴급')
+                : t.priority === 'today'
+                  ? statusTag('warning', '2순위 오늘')
+                  : statusTag('good', '3순위 다가옴');
+              const btnLabel = t.category === 'water'
+                ? (t.title.indexOf('보류') !== -1 || t.title.indexOf('과습') !== -1 ? '점검 완료' : '물 주기 완료')
+                : '완료';
+              return '<div class="list-row">'
+                + '<div style="min-width:220px;flex:1;">'
+                + '<div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:4px;">'
+                + pTag
+                + '<strong style="font-size:14px;">' + esc(t.plantName) + '</strong>'
+                + '<span class="muted" style="font-size:12px;">' + esc(CARE_TYPE_LABELS[t.category] || t.category) + ' · ' + esc(t.badgeText) + '</span>'
+                + '</div>'
+                + '<div style="font-size:14px;font-weight:600;color:#0f172a;">' + esc(t.title) + '</div>'
+                + '<div style="font-size:12px;color:#475569;margin-top:2px;">' + esc(t.description) + '</div>'
+                + '</div>'
+                + '<div style="display:flex;gap:8px;">'
+                + '<button type="button" class="btn btn-soft btn-sm" data-action="open-plant" data-id="' + esc(t.plantId) + '">상세</button>'
+                + '<button type="button" class="btn btn-primary btn-sm" data-action="complete-task" data-task-id="' + esc(t.id) + '">' + btnLabel + '</button>'
+                + '</div>'
+                + '</div>';
+            }).join('');
+
+        taskSummaryHtml = '<section class="card">'
+          + '<div class="section-head">'
+          + '<div>'
+          + '<div class="kicker">오늘의 우선순위 관리 요약</div>'
+          + '<h1 class="hero-title">' + (dueNow > 0 ? '오늘 처리할 일 ' + dueNow + '건' : '오늘 긴급 관리 일정이 모두 안정적입니다') + '</h1>'
+          + '</div>'
+          + '<div style="display:flex;gap:8px;flex-wrap:wrap;">'
+          + statusTag(urgentCount > 0 ? 'danger' : 'good', '긴급 ' + urgentCount + '건')
+          + statusTag(todayCount > 0 ? 'warning' : 'good', '오늘 ' + todayCount + '건')
+          + statusTag('good', '다가옴 ' + upcomingCount + '건')
+          + '</div>'
+          + '</div>'
+          + '<div class="filter-bar" style="margin-bottom:14px;">' + catBtns + '</div>'
+          + taskListHtml
+          + '</section>';
+      }
+
+      const plantCardsHtml = plants.length === 0 ? '' : '<section>'
+        + '<div class="section-head">'
+        + '<h2 class="section-title">등록된 식물 상태 (' + plants.length + ')</h2>'
+        + '<button type="button" class="btn btn-outline btn-sm" data-nav="plants">전체 보기</button>'
+        + '</div>'
+        + '<div class="grid-3">'
+        + plants.map(function (p) {
+            const overall = getOverallPlantStatus(p);
+            const w = evaluateWateringStatus(p);
+            const env = evaluateEnvironment(p);
+            return '<article class="card" style="padding:16px;display:flex;flex-direction:column;gap:12px;">'
+              + '<div style="display:flex;gap:12px;align-items:center;">'
+              + '<img class="plant-thumb-sm" src="' + esc(p.photoUrl || PLANT_PRESETS[0].url) + '" alt="' + esc(p.name) + '" />'
+              + '<div style="min-width:0;flex:1;">'
+              + '<div style="display:flex;align-items:center;justify-content:space-between;gap:6px;">'
+              + '<strong style="font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(p.name) + '</strong>'
+              + statusTag(overall.level, overall.label)
+              + '</div>'
+              + '<div class="muted" style="font-size:12px;margin-top:2px;">' + esc(p.species) + ' · ' + esc(STAGE_LABELS[p.growthStage] || p.growthStage) + '</div>'
+              + '<div class="muted" style="font-size:12px;">수분: ' + esc(p.soilMoisture) + '</div>'
+              + '</div>'
+              + '</div>'
+              + '<div class="sub-box" style="padding:10px 12px;font-size:12px;">'
+              + '<div style="font-weight:700;color:#064e3b;">' + esc(w.action) + '</div>'
+              + '<div class="muted" style="margin-top:3px;">온도 ' + (p.currentTempC != null ? p.currentTempC + '°C' : '-') + ' · pH ' + (p.currentPh != null ? p.currentPh : '-') + ' (' + esc(env.phLabel) + ')</div>'
+              + '</div>'
+              + '<div style="display:flex;gap:8px;flex-wrap:wrap;">'
+              + '<button type="button" class="btn btn-primary btn-sm" style="flex:1;" data-action="open-care" data-id="' + esc(p.id) + '" data-mode="water">물·수분 기록</button>'
+              + '<button type="button" class="btn btn-outline btn-sm" data-action="open-plant" data-id="' + esc(p.id) + '">상세</button>'
+              + '</div>'
+              + '</article>';
+          }).join('')
+        + '</div>'
+        + '</section>';
+
+      const summaryPanelsHtml = plants.length === 0 ? '' : (function () {
+        const wateringRows = plants.map(function (p) {
+          const nextDate = computeNextWateringCheckDate(p);
+          const w = evaluateWateringStatus(p);
+          return '<div class="list-row">'
+            + '<div><strong style="font-size:13px;">' + esc(p.name) + '</strong><div class="muted" style="font-size:12px;">' + esc(p.soilMoisture) + ' · ' + esc(w.action) + '</div></div>'
+            + '<span class="mono" style="font-size:12px;font-weight:600;">' + (nextDate ? formatKoreanDate(nextDate) + ' (' + formatDueBadge(nextDate) + ')' : '일정 없음') + '</span>'
+            + '</div>';
+        }).join('');
+
+        const pressurePlants = plants.filter(function (p) { return p.soilPressureEnabled; });
+        const pressureRows = pressurePlants.length === 0
+          ? '<div class="muted" style="font-size:13px;">토양 압력 실험 조건이 활성화된 식물이 없습니다.</div>'
+          : pressurePlants.map(function (p) {
+              return '<div class="list-row">'
+                + '<div><strong style="font-size:13px;">' + esc(p.name) + '</strong><div class="muted" style="font-size:12px;">목표 ' + (p.targetPressureKpa != null ? p.targetPressureKpa + ' kPa' : '-') + ' · ' + (p.pressureIntervalDays || 7) + '일 간격</div></div>'
+                + '<span class="mono" style="font-size:12px;">' + (p.nextPressureDate ? formatDueBadge(p.nextPressureDate) : '-') + '</span>'
+                + '</div>';
+            }).join('');
+
+        return '<section class="grid-2">'
+          + '<div class="card"><div class="section-head"><h2 class="section-title">물 주기 예정 &amp; 수분 상태</h2></div>' + wateringRows + '</div>'
+          + '<div class="card"><div class="section-head"><h2 class="section-title">토양 압력 실험 조건 요약</h2></div>' + pressureRows + '</div>'
+          + '</section>';
+      })();
+
+      return '<div class="stack">' + taskSummaryHtml + plantCardsHtml + summaryPanelsHtml + '</div>';
+    }
+
+    function renderPlantDetail(plant) {
+      const w = evaluateWateringStatus(plant);
+      const env = evaluateEnvironment(plant);
+      const guide = plant.aiGuide;
+      const plantGrowth = state.growthRecords.filter(function (r) { return r.plantId === plant.id; })
+        .sort(function (a, b) { return b.date.localeCompare(a.date); });
+      const plantLogs = state.careLogs.filter(function (l) { return l.plantId === plant.id; }).slice(0, 8);
+
+      const guideHtml = !guide
+        ? '<div class="sub-box"><div style="font-size:13px;font-weight:600;margin-bottom:8px;">이 식물의 생육 가이드가 아직 생성되지 않았습니다.</div>'
+          + '<button type="button" class="btn btn-primary btn-sm" data-action="regen-guide" data-id="' + esc(plant.id) + '">맞춤 생육 가이드 생성하기</button></div>'
+        : '<div class="stack" style="gap:12px;">'
+          + '<div class="grid-4">'
+          + '<div class="sub-box"><div class="kicker">적정 온도</div><div class="mono" style="font-size:16px;font-weight:700;margin-top:4px;">' + guide.optimalTempMin + ' ~ ' + guide.optimalTempMax + '°C</div><div style="margin-top:4px;">' + statusTag(env.tempStatus === 'unknown' ? 'warning' : env.tempStatus, env.tempLabel) + '</div></div>'
+          + '<div class="sub-box"><div class="kicker">적정 토양 pH</div><div class="mono" style="font-size:16px;font-weight:700;margin-top:4px;">pH ' + guide.optimalPhMin + ' ~ ' + guide.optimalPhMax + '</div><div style="margin-top:4px;">' + statusTag(env.phStatus === 'unknown' ? 'warning' : env.phStatus, env.phLabel) + '</div></div>'
+          + '<div class="sub-box"><div class="kicker">권장 급수 간격</div><div class="mono" style="font-size:16px;font-weight:700;margin-top:4px;">약 ' + guide.recommendedWateringDays + '일</div><div class="muted" style="font-size:12px;margin-top:4px;">' + esc(guide.optimalMoistureText) + '</div></div>'
+          + '<div class="sub-box"><div class="kicker">햇빛 &amp; 통풍</div><div style="font-size:13px;font-weight:600;margin-top:4px;">' + esc(guide.sunlightVentilation) + '</div></div>'
+          + '</div>'
+          + '<div class="sub-box" style="font-size:13px;"><strong>생육 단계 팁:</strong> ' + esc(guide.stageSpecificTip) + '<br/><br/><strong>토양 압력·통기 관리:</strong> ' + esc(guide.pressureManagementNote) + '</div>'
+          + (guide.uncertaintyNotes ? '<div class="status-warning" style="padding:12px;border-radius:12px;border:1px solid var(--warn-border);font-size:13px;"><strong>확인 필요 안내:</strong> ' + esc(guide.uncertaintyNotes) + '</div>' : '')
+          + '</div>';
+
+      return '<div class="stack">'
+        + '<div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;">'
+        + '<button type="button" class="btn btn-outline btn-sm" data-action="close-detail">← 식물 목록으로</button>'
+        + '<div style="display:flex;gap:8px;flex-wrap:wrap;">'
+        + '<button type="button" class="btn btn-soft btn-sm" data-action="ask-ai" data-id="' + esc(plant.id) + '">이 식물로 AI 상담</button>'
+        + '<button type="button" class="btn btn-outline btn-sm" data-action="edit-plant" data-id="' + esc(plant.id) + '">정보 수정</button>'
+        + '<button type="button" class="btn btn-danger-outline btn-sm" data-action="delete-plant" data-id="' + esc(plant.id) + '">등록 취소</button>'
+        + '</div>'
+        + '</div>'
+        + '<section class="card">'
+        + '<div style="display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start;">'
+        + '<img src="' + esc(plant.photoUrl || PLANT_PRESETS[0].url) + '" alt="' + esc(plant.name) + '" style="width:200px;height:150px;object-fit:cover;border-radius:14px;border:1px solid var(--border);" />'
+        + '<div style="flex:1;min-width:240px;">'
+        + '<div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;">'
+        + '<h1 class="hero-title">' + esc(plant.name) + '</h1>'
+        + statusTag(w.level, w.badge)
+        + '</div>'
+        + '<p class="muted" style="font-size:13px;margin:4px 0 12px;">' + esc(plant.species) + ' · ' + esc(CATEGORY_META[plant.category] ? CATEGORY_META[plant.category].label : '기타') + ' · ' + esc(STAGE_LABELS[plant.growthStage] || plant.growthStage) + (plant.experimentGroup ? ' · 실험군: ' + esc(plant.experimentGroup) : '') + '</p>'
+        + '<div style="display:flex;flex-wrap:wrap;gap:8px;">'
+        + '<button type="button" class="btn btn-primary btn-sm" data-action="open-care" data-id="' + esc(plant.id) + '" data-mode="water">물 주기 / 수분 점검</button>'
+        + '<button type="button" class="btn btn-soft btn-sm" data-action="open-care" data-id="' + esc(plant.id) + '" data-mode="env">온도 / pH 입력</button>'
+        + '<button type="button" class="btn btn-soft btn-sm" data-action="open-care" data-id="' + esc(plant.id) + '" data-mode="pressure">토양 압력 점검</button>'
+        + '<button type="button" class="btn btn-outline btn-sm" data-action="open-growth-modal" data-plant-id="' + esc(plant.id) + '">+ 성장 기록 추가</button>'
+        + '</div>'
+        + '</div>'
+        + '</div>'
+        + '</section>'
+        + '<section class="card"><div class="section-head"><h2 class="section-title">맞춤 생육 가이드 &amp; 현재 환경 비교</h2><button type="button" class="btn btn-outline btn-sm" data-action="regen-guide" data-id="' + esc(plant.id) + '">기준 다시 분석</button></div>' + guideHtml + '</section>'
+        + '<section class="grid-2">'
+        + '<div class="card"><h2 class="section-title" style="margin-bottom:12px;">최근 관리 이력 (' + plantLogs.length + ')</h2>'
+        + (plantLogs.length === 0 ? '<div class="muted" style="font-size:13px;">아직 기록된 관리 이력이 없습니다.</div>' : plantLogs.map(function (l) {
+            return '<div class="list-row"><div><strong style="font-size:13px;">' + esc(CARE_TYPE_LABELS[l.type] || l.type) + '</strong><div class="muted" style="font-size:12px;">' + esc(l.summary) + '</div></div><span class="mono muted" style="font-size:12px;">' + esc(l.date) + '</span></div>';
+          }).join(''))
+        + '</div>'
+        + '<div class="card"><h2 class="section-title" style="margin-bottom:12px;">최근 성장 기록 (' + plantGrowth.length + ')</h2>'
+        + (plantGrowth.length === 0 ? '<div class="muted" style="font-size:13px;">아직 성장 기록이 없습니다.</div>' : plantGrowth.slice(0, 6).map(function (r) {
+            return '<div class="list-row"><div><strong style="font-size:13px;">' + esc(r.date) + '</strong><div class="muted" style="font-size:12px;">키 ' + r.heightCm + 'cm · 잎 ' + r.leafCount + '장' + (r.memo ? ' · ' + esc(r.memo) : '') + '</div></div></div>';
+          }).join(''))
+        + '</div>'
+        + '</section>'
+        + '</div>';
+    }
+
+    function renderPlants() {
+      if (state.selectedPlantId) {
+        const selected = getPlantById(state.selectedPlantId);
+        if (selected) return renderPlantDetail(selected);
+        state.selectedPlantId = null;
+      }
+      if (state.plants.length === 0) {
+        return '<div class="card-dashed">'
+          + '<h1 class="hero-title" style="margin-bottom:8px;">등록된 식물이 없습니다</h1>'
+          + '<p class="muted" style="font-size:14px;margin-bottom:16px;">식물을 등록하면 품종별 적정 온도·토양 pH·물 주기·실험 조건을 한곳에서 관리할 수 있습니다.</p>'
+          + '<button type="button" class="btn btn-primary" data-action="open-register">+ 식물 등록하기</button>'
+          + '</div>';
+      }
+      return '<div class="stack">'
+        + '<div class="section-head"><h1 class="hero-title">내 식물 (' + state.plants.length + ')</h1><button type="button" class="btn btn-primary btn-sm" data-action="open-register">+ 새 식물 등록</button></div>'
+        + '<div class="grid-3">'
+        + state.plants.map(function (p) {
+            const overall = getOverallPlantStatus(p);
+            const w = evaluateWateringStatus(p);
+            return '<article class="card" style="padding:16px;display:flex;flex-direction:column;gap:12px;">'
+              + '<img class="plant-thumb" src="' + esc(p.photoUrl || PLANT_PRESETS[0].url) + '" alt="' + esc(p.name) + '" />'
+              + '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">'
+              + '<div><strong style="font-size:16px;">' + esc(p.name) + '</strong><div class="muted" style="font-size:12px;">' + esc(p.species) + ' · ' + esc(STAGE_LABELS[p.growthStage] || p.growthStage) + '</div></div>'
+              + statusTag(overall.level, overall.label)
+              + '</div>'
+              + '<div class="sub-box" style="font-size:12px;display:grid;grid-template-columns:1fr 1fr;gap:8px;">'
+              + '<div><span class="muted">수분:</span> <strong>' + esc(p.soilMoisture) + '</strong></div>'
+              + '<div><span class="muted">온도:</span> <strong class="mono">' + (p.currentTempC != null ? p.currentTempC + '°C' : '-') + '</strong></div>'
+              + '<div><span class="muted">토양 pH:</span> <strong class="mono">' + (p.currentPh != null ? p.currentPh : '-') + '</strong></div>'
+              + '<div><span class="muted">압력:</span> <strong class="mono">' + (p.soilPressureEnabled && p.targetPressureKpa != null ? p.targetPressureKpa + 'kPa' : '미설정') + '</strong></div>'
+              + '</div>'
+              + '<div style="font-size:12px;color:#065f46;font-weight:600;">' + esc(w.action) + '</div>'
+              + '<div style="display:flex;gap:8px;">'
+              + '<button type="button" class="btn btn-primary btn-sm" style="flex:1;" data-action="open-plant" data-id="' + esc(p.id) + '">상세 관리</button>'
+              + '<button type="button" class="btn btn-outline btn-sm" data-action="edit-plant" data-id="' + esc(p.id) + '">수정</button>'
+              + '<button type="button" class="btn btn-danger-outline btn-sm" data-action="delete-plant" data-id="' + esc(p.id) + '">삭제</button>'
+              + '</div>'
+              + '</article>';
+          }).join('')
+        + '</div>'
+        + '</div>';
+    }
+
+    function renderSchedule() {
+      const tasks = buildDailyTasks(state.plants);
+      const filtered = tasks.filter(function (t) {
+        const catOk = state.scheduleFilter === 'all' || t.category === state.scheduleFilter;
+        const priOk = state.schedulePriorityFilter === 'all' || t.priority === state.schedulePriorityFilter;
+        return catOk && priOk;
+      });
+
+      const catFilterHtml = [['all', '전체'], ['water', '물 주기'], ['pressure', '토양 압력'], ['ph', '토양 pH'], ['temp', '온도']]
+        .map(function (c) {
+          return '<button type="button" class="filter-btn ' + (state.scheduleFilter === c[0] ? 'active' : '') + '" data-sched-cat="' + c[0] + '">' + c[1] + '</button>';
+        }).join('');
+
+      const priFilterHtml = [['all', '전체 우선순위'], ['urgent', '1순위 긴급'], ['today', '2순위 오늘'], ['upcoming', '3순위 다가옴']]
+        .map(function (p) {
+          return '<button type="button" class="filter-btn ' + (state.schedulePriorityFilter === p[0] ? 'active' : '') + '" data-sched-pri="' + p[0] + '">' + p[1] + '</button>';
+        }).join('');
+
+      return '<div class="stack">'
+        + '<section class="card">'
+        + '<div class="section-head"><h1 class="hero-title">관리 일정 및 이력</h1><span class="muted" style="font-size:13px;">총 ' + filtered.length + '건의 예정 작업</span></div>'
+        + '<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">'
+        + '<div class="filter-bar">' + catFilterHtml + '</div>'
+        + '<div class="filter-bar">' + priFilterHtml + '</div>'
+        + '</div>'
+        + (filtered.length === 0
+            ? '<div class="sub-box" style="text-align:center;padding:24px;color:#64748b;font-size:13px;">조건에 맞는 예정 관리 일정이 없습니다.</div>'
+            : filtered.map(function (t) {
+                const pTag = t.priority === 'urgent' ? statusTag('danger', '긴급') : t.priority === 'today' ? statusTag('warning', '오늘') : statusTag('good', '다가옴');
+                return '<div class="list-row">'
+                  + '<div style="min-width:220px;flex:1;">'
+                  + '<div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:4px;">' + pTag + '<strong>' + esc(t.plantName) + '</strong><span class="muted" style="font-size:12px;">' + esc(t.badgeText) + '</span></div>'
+                  + '<div style="font-size:14px;font-weight:600;">' + esc(t.title) + '</div>'
+                  + '<div class="muted" style="font-size:12px;">' + esc(t.description) + '</div>'
+                  + '</div>'
+                  + '<button type="button" class="btn btn-primary btn-sm" data-action="complete-task" data-task-id="' + esc(t.id) + '">완료 처리</button>'
+                  + '</div>';
+              }).join(''))
+        + '</section>'
+        + '<section class="card"><h2 class="section-title" style="margin-bottom:12px;">최근 완료된 관리 이력 (' + state.careLogs.length + ')</h2>'
+        + (state.careLogs.length === 0
+            ? '<div class="muted" style="font-size:13px;">아직 완료한 관리 기록이 없습니다.</div>'
+            : state.careLogs.slice(0, 15).map(function (l) {
+                const p = getPlantById(l.plantId);
+                return '<div class="list-row"><div><strong style="font-size:13px;">' + esc(p ? p.name : '삭제된 식물') + ' · ' + esc(CARE_TYPE_LABELS[l.type] || l.type) + '</strong><div class="muted" style="font-size:12px;">' + esc(l.summary) + '</div></div><span class="mono muted" style="font-size:12px;">' + esc(l.date) + '</span></div>';
+              }).join(''))
+        + '</section>'
+        + '</div>';
+    }
+
+    function renderGrowthChartSvg(seriesList, metric) {
+      const nonEmpty = seriesList.filter(function (s) { return s.records.length > 0; });
+      if (nonEmpty.length === 0) {
+        return '<div class="sub-box" style="text-align:center;padding:30px;color:#64748b;font-size:13px;">표시할 성장 기록이 없습니다. 기록을 추가하면 시간 비례 변화 그래프가 표시됩니다.</div>';
+      }
+
+      const w = 680, h = 250, padL = 46, padR = 24, padT = 20, padB = 36;
+      const plotW = w - padL - padR, plotH = h - padT - padB;
+      const allPoints = [];
+      nonEmpty.forEach(function (s) {
+        s.records.forEach(function (r) {
+          allPoints.push({ ts: new Date(r.date + 'T00:00:00').getTime(), date: r.date, val: Number(r[metric]) || 0 });
+        });
+      });
+      const minTs = Math.min.apply(null, allPoints.map(function (p) { return p.ts; }));
+      const maxTs = Math.max.apply(null, allPoints.map(function (p) { return p.ts; }));
+      const spanTs = Math.max(1, maxTs - minTs);
+      const rawMaxVal = Math.max.apply(null, allPoints.map(function (p) { return p.val; }));
+      const maxVal = Math.max(metric === 'heightCm' ? 10 : 5, Math.ceil(rawMaxVal * 1.15));
+
+      function xOf(ts) { return maxTs === minTs ? padL + plotW / 2 : padL + ((ts - minTs) / spanTs) * plotW; }
+      function yOf(v) { return padT + plotH - (v / maxVal) * plotH; }
+
+      let gridSvg = '';
+      for (let i = 0; i <= 4; i++) {
+        const val = Math.round((maxVal * i) / 4);
+        const y = yOf(val);
+        gridSvg += '<line x1="' + padL + '" y1="' + y + '" x2="' + (w - padR) + '" y2="' + y + '" stroke="#e2e8f0" stroke-dasharray="3 3" />'
+          + '<text x="' + (padL - 8) + '" y="' + (y + 4) + '" text-anchor="end" font-size="11" fill="#64748b">' + val + '</text>';
+      }
+
+      const uniqueDates = Array.from(new Set(allPoints.map(function (p) { return p.date; }))).sort();
+      let lastX = -999;
+      let dateLabelsSvg = '';
+      uniqueDates.forEach(function (dStr, idx) {
+        const ts = new Date(dStr + 'T00:00:00').getTime();
+        const x = xOf(ts);
+        if (idx === 0 || idx === uniqueDates.length - 1 || x - lastX >= 68) {
+          dateLabelsSvg += '<text x="' + x + '" y="' + (h - 10) + '" text-anchor="middle" font-size="11" fill="#64748b">' + formatKoreanDate(dStr) + '</text>';
+          lastX = x;
+        }
+      });
+
+      const colors = ['#064e3b', '#65a30d', '#0284c7', '#d97706', '#dc2626'];
+      let linesSvg = '';
+      let legendHtml = '<div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:10px;font-size:12px;">';
+
+      nonEmpty.forEach(function (s, idx) {
+        const c = colors[idx % colors.length];
+        const sorted = s.records.slice().sort(function (a, b) {
+          return a.date !== b.date ? a.date.localeCompare(b.date) : (a.createdAt || '').localeCompare(b.createdAt || '');
+        });
+        const coords = sorted.map(function (r) {
+          return { x: xOf(new Date(r.date + 'T00:00:00').getTime()), y: yOf(Number(r[metric]) || 0), r: r };
+        });
+        const pathD = coords.map(function (pt, i) { return (i === 0 ? 'M ' : 'L ') + pt.x.toFixed(1) + ' ' + pt.y.toFixed(1); }).join(' ');
+        if (coords.length > 1) {
+          linesSvg += '<path d="' + pathD + '" fill="none" stroke="' + c + '" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />';
+        }
+        coords.forEach(function (pt) {
+          linesSvg += '<circle cx="' + pt.x.toFixed(1) + '" cy="' + pt.y.toFixed(1) + '" r="4.5" fill="' + c + '" stroke="#fff" stroke-width="1.5"><title>'
+            + esc(s.plant.name + ' · ' + pt.r.date + ': ' + pt.r.heightCm + 'cm / 잎 ' + pt.r.leafCount + '장')
+            + '</title></circle>';
+        });
+        legendHtml += '<span style="display:inline-flex;align-items:center;gap:6px;font-weight:600;"><span style="width:10px;height:10px;border-radius:99px;background:' + c + ';"></span>' + esc(s.plant.name) + '</span>';
+      });
+      legendHtml += '</div>';
+
+      return '<div style="overflow-x:auto;">'
+        + '<svg viewBox="0 0 ' + w + ' ' + h + '" style="width:100%;min-width:460px;height:auto;display:block;">'
+        + gridSvg + dateLabelsSvg + linesSvg
+        + '</svg>'
+        + '</div>' + legendHtml;
+    }
+
+    function renderGrowth() {
+      if (state.plants.length === 0) {
+        return '<div class="card-dashed">'
+          + '<h1 class="hero-title" style="margin-bottom:8px;">성장 기록을 시작하려면 먼저 식물을 등록하세요</h1>'
+          + '<p class="muted" style="font-size:14px;margin-bottom:16px;">날짜별 키(cm), 잎 개수, 사진을 기록하고 실험군 비교 그래프로 확인할 수 있습니다.</p>'
+          + '<button type="button" class="btn btn-primary" data-action="open-register">+ 식물 등록하기</button>'
+          + '</div>';
+      }
+
+      if (!state.growthSelectedPlantId || !getPlantById(state.growthSelectedPlantId)) {
+        state.growthSelectedPlantId = state.plants[0].id;
+      }
+
+      const metric = state.growthMetric || 'heightCm';
+      const compareIds = state.growthCompareIds.filter(function (id) { return !!getPlantById(id); });
+      const activeIds = state.growthCompareMode ? compareIds : [state.growthSelectedPlantId];
+      const seriesList = activeIds.map(function (id) {
+        const plant = getPlantById(id);
+        return {
+          plant: plant,
+          records: state.growthRecords.filter(function (r) { return r.plantId === id; })
+            .sort(function (a, b) { return a.date.localeCompare(b.date); })
+        };
+      });
+
+      const selectorHtml = state.growthCompareMode
+        ? '<div class="filter-bar">' + state.plants.map(function (p) {
+            const on = compareIds.indexOf(p.id) !== -1;
+            return '<button type="button" class="filter-btn ' + (on ? 'active' : '') + '" data-toggle-compare="' + esc(p.id) + '">' + (on ? '✓ ' : '') + esc(p.name) + '</button>';
+          }).join('') + '</div>'
+        : '<div class="filter-bar">' + state.plants.map(function (p) {
+            return '<button type="button" class="filter-btn ' + (state.growthSelectedPlantId === p.id ? 'active' : '') + '" data-growth-plant="' + esc(p.id) + '">' + esc(p.name) + '</button>';
+          }).join('') + '</div>';
+
+      const visibleRecords = state.growthRecords
+        .filter(function (r) { return activeIds.indexOf(r.plantId) !== -1; })
+        .sort(function (a, b) { return b.date.localeCompare(a.date); });
+
+      return '<div class="stack">'
+        + '<section class="card">'
+        + '<div class="section-head">'
+        + '<div><h1 class="hero-title">성장 기록 및 실험 비교</h1><div class="muted" style="font-size:13px;">시간 간격에 비례한 성장 추이를 확인하세요.</div></div>'
+        + '<div style="display:flex;gap:8px;flex-wrap:wrap;">'
+        + '<button type="button" class="btn ' + (state.growthCompareMode ? 'btn-primary' : 'btn-outline') + ' btn-sm" data-action="toggle-compare-mode">' + (state.growthCompareMode ? '비교 모드 켜짐' : '여러 식물 비교') + '</button>'
+        + '<button type="button" class="btn btn-primary btn-sm" data-action="open-growth-modal" data-plant-id="' + esc(state.growthSelectedPlantId) + '">+ 성장 기록 추가</button>'
+        + '</div>'
+        + '</div>'
+        + '<div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;margin-bottom:14px;">'
+        + selectorHtml
+        + '<div class="filter-bar">'
+        + '<button type="button" class="filter-btn ' + (metric === 'heightCm' ? 'active' : '') + '" data-growth-metric="heightCm">키 (cm)</button>'
+        + '<button type="button" class="filter-btn ' + (metric === 'leafCount' ? 'active' : '') + '" data-growth-metric="leafCount">잎 개수 (장)</button>'
+        + '</div>'
+        + '</div>'
+        + (state.growthCompareMode && activeIds.length === 0
+            ? '<div class="sub-box" style="text-align:center;padding:24px;font-size:13px;color:#64748b;">비교할 식물을 위에서 선택해 주세요.</div>'
+            : renderGrowthChartSvg(seriesList, metric))
+        + '</section>'
+        + '<section class="card"><h2 class="section-title" style="margin-bottom:12px;">측정 타임라인 (' + visibleRecords.length + ')</h2>'
+        + (visibleRecords.length === 0
+            ? '<div class="muted" style="font-size:13px;">선택한 식물의 성장 기록이 아직 없습니다.</div>'
+            : visibleRecords.map(function (r) {
+                const p = getPlantById(r.plantId);
+                return '<div class="list-row">'
+                  + '<div style="display:flex;gap:12px;align-items:center;flex:1;min-width:220px;">'
+                  + (r.photoUrl ? '<img src="' + esc(r.photoUrl) + '" alt="성장 사진" style="width:52px;height:52px;object-fit:cover;border-radius:10px;border:1px solid var(--border);" />' : '')
+                  + '<div><strong>' + esc(p ? p.name : '식물') + ' · ' + esc(r.date) + '</strong>'
+                  + '<div class="muted" style="font-size:13px;">키 <span class="mono">' + r.heightCm + 'cm</span> · 잎 <span class="mono">' + r.leafCount + '장</span>' + (r.memo ? ' · ' + esc(r.memo) : '') + '</div></div>'
+                  + '</div>'
+                  + '<div style="display:flex;gap:6px;">'
+                  + '<button type="button" class="btn btn-outline btn-sm" data-action="edit-growth" data-id="' + esc(r.id) + '">수정</button>'
+                  + '<button type="button" class="btn btn-danger-outline btn-sm" data-action="delete-growth" data-id="' + esc(r.id) + '">삭제</button>'
+                  + '</div>'
+                  + '</div>';
+              }).join(''))
+        + '</section>'
+        + '</div>';
+    }
+
+    function renderAiCounsel() {
+      const ctxPlant = state.aiContextPlantId ? getPlantById(state.aiContextPlantId) : null;
+      if (state.aiContextPlantId && !ctxPlant) state.aiContextPlantId = null;
+
+      const plantOptions = '<option value="">일반 상담 (특정 식물 미지정)</option>'
+        + state.plants.map(function (p) {
+            return '<option value="' + esc(p.id) + '"' + (state.aiContextPlantId === p.id ? ' selected' : '') + '>' + esc(p.name) + ' (' + esc(p.species) + ')</option>';
+          }).join('');
+
+      const quickPrompts = [
+        '지금 물을 줘야 할까요? 과습인지 헷갈려요',
+        '현재 온도랑 토양 pH가 적정한지 설명해 주세요',
+        '토양 압력 실험 조건을 유지할 때 주의할 점이 궁금해요',
+        '잎이 처지거나 색이 변할 때 점검 순서를 알려주세요'
+      ];
+
+      return '<div class="stack">'
+        + '<section class="card">'
+        + '<div class="section-head">'
+        + '<div><h1 class="hero-title">AI 식물 상담실</h1><div class="muted" style="font-size:13px;">등록한 식물의 수분·온도·토양 pH·압력 데이터를 바탕으로 고등학생 눈높이 맞춤 조언을 제공합니다.</div></div>'
+        + (state.chatMessages.length > 0 ? '<button type="button" class="btn btn-outline btn-sm" data-action="clear-chat">대화 비우기</button>' : '')
+        + '</div>'
+        + '<div style="margin-bottom:14px;">'
+        + '<label class="field-label" for="ai-plant-select">상담 기준 식물 선택</label>'
+        + '<select id="ai-plant-select" class="select" style="max-width:360px;">' + plantOptions + '</select>'
+        + '</div>'
+        + '<div class="filter-bar" style="margin-bottom:16px;">'
+        + quickPrompts.map(function (q, i) {
+            return '<button type="button" class="filter-btn" data-quick-q="' + i + '">' + esc(q) + '</button>';
+          }).join('')
+        + '</div>'
+        + '<div class="chat-box" id="chat-box">'
+        + (state.chatMessages.length === 0
+            ? '<div class="sub-box" style="font-size:13px;color:#475569;">궁금한 증상이나 실험 조건을 아래에 입력하거나 추천 질문을 눌러 보세요. 브라우저 단독 실행 모드에서도 오프라인으로 즉시 분석해 드립니다.</div>'
+            : state.chatMessages.map(function (m) {
+                return '<div class="chat-msg ' + (m.role === 'user' ? 'user' : 'assistant') + '">' + esc(m.content) + '</div>';
+              }).join(''))
+        + '</div>'
+        + '<form id="ai-chat-form" style="display:flex;gap:8px;margin-top:14px;">'
+        + '<input type="text" id="ai-chat-input" class="input" placeholder="예: 겉흙은 촉촉한데 오늘 물 주기 일정이 떴어요. 어떻게 할까요?" required />'
+        + '<button type="submit" class="btn btn-primary">질문하기</button>'
+        + '</form>'
+        + '</section>'
+        + '</div>';
+    }
+
+    function closeModal() {
+      const root = document.getElementById('modal-root');
+      if (root) root.innerHTML = '';
+    }
+
+    function mountModal(title, bodyHtml) {
+      const root = document.getElementById('modal-root');
+      if (!root) return;
+      root.innerHTML = '<div class="modal-backdrop" id="modal-backdrop" role="dialog" aria-modal="true">'
+        + '<div class="modal-panel">'
+        + '<div class="modal-head"><strong style="font-size:17px;">' + esc(title) + '</strong>'
+        + '<button type="button" class="icon-btn" id="modal-close-btn" aria-label="닫기">' + ICONS.x + '</button></div>'
+        + '<div class="modal-body">' + bodyHtml + '</div>'
+        + '</div>'
+        + '</div>';
+      document.getElementById('modal-close-btn').onclick = closeModal;
+      document.getElementById('modal-backdrop').onclick = function (e) {
+        if (e.target && e.target.id === 'modal-backdrop') closeModal();
+      };
+    }
+
+    function openPlantModal(existingPlant) {
+      const p = existingPlant || null;
+      const today = getTodayStr();
+      let photoUrl = p ? p.photoUrl : PLANT_PRESETS[0].url;
+
+      const presetsHtml = PLANT_PRESETS.map(function (pr) {
+        const active = photoUrl === pr.url;
+        return '<button type="button" class="filter-btn ' + (active ? 'active' : '') + '" data-preset-url="' + esc(pr.url) + '">' + esc(pr.label) + '</button>';
+      }).join('');
+
+      const catOpts = Object.keys(CATEGORY_META).map(function (k) {
+        return '<option value="' + k + '"' + ((p ? p.category : 'herb') === k ? ' selected' : '') + '>' + esc(CATEGORY_META[k].icon + ' ' + CATEGORY_META[k].label) + '</option>';
+      }).join('');
+
+      const stageOpts = Object.keys(STAGE_LABELS).map(function (k) {
+        return '<option value="' + k + '"' + ((p ? p.growthStage : 'vegetative') === k ? ' selected' : '') + '>' + esc(STAGE_LABELS[k]) + '</option>';
+      }).join('');
+
+      const moistureOpts = MOISTURE_OPTIONS.map(function (m) {
+        return '<option value="' + esc(m) + '"' + ((p ? p.soilMoisture : '약간 건조') === m ? ' selected' : '') + '>' + esc(m) + '</option>';
+      }).join('');
+
+      const bodyHtml = '<form id="plant-form" class="stack" style="gap:14px;">'
+        + '<div class="grid-2">'
+        + '<div><label class="field-label" for="pf-name">식물 이름 *</label><input id="pf-name" class="input" required value="' + esc(p ? p.name : '') + '" placeholder="예: 바질 실험군 A" /></div>'
+        + '<div><label class="field-label" for="pf-species">품종 / 식물 종류 *</label><input id="pf-species" class="input" required value="' + esc(p ? p.species : '') + '" placeholder="예: 스위트 바질, 방울토마토" /></div>'
+        + '</div>'
+        + '<div class="grid-3">'
+        + '<div><label class="field-label" for="pf-category">식물 분류</label><select id="pf-category" class="select">' + catOpts + '</select></div>'
+        + '<div><label class="field-label" for="pf-stage">생육 단계</label><select id="pf-stage" class="select">' + stageOpts + '</select></div>'
+        + '<div><label class="field-label" for="pf-start">재배 시작일</label><input id="pf-start" type="date" class="input" value="' + esc(p ? p.startDate : today) + '" /></div>'
+        + '</div>'
+        + '<div class="grid-2">'
+        + '<div><label class="field-label" for="pf-group">실험군 / 메모 (선택)</label><input id="pf-group" class="input" value="' + esc(p ? (p.experimentGroup || '') : '') + '" placeholder="예: 토양압력 25kPa 실험군" /></div>'
+        + '<div><label class="field-label" for="pf-loc">재배 위치 (선택)</label><input id="pf-loc" class="input" value="' + esc(p ? (p.location || '') : '') + '" placeholder="예: 학교 과학실 남향 창가" /></div>'
+        + '</div>'
+        + '<div class="sub-box">'
+        + '<label class="field-label">식물 사진 (기본 일러스트 선택 또는 파일 업로드)</label>'
+        + '<div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;">'
+        + '<img id="pf-photo-preview" src="' + esc(photoUrl) + '" alt="미리보기" class="plant-thumb-sm" />'
+        + '<div style="flex:1;min-width:200px;display:flex;flex-direction:column;gap:8px;">'
+        + '<div class="filter-bar" id="pf-preset-bar">' + presetsHtml + '</div>'
+        + '<input id="pf-file" type="file" accept="image/*" style="font-size:12px;" />'
+        + '</div>'
+        + '</div>'
+        + '</div>'
+        + '<div class="grid-3">'
+        + '<div><label class="field-label" for="pf-water-date">마지막 물 준 날짜</label><input id="pf-water-date" type="date" class="input" value="' + esc(p ? p.lastWateredDate : today) + '" /></div>'
+        + '<div><label class="field-label" for="pf-moisture">현재 토양 수분</label><select id="pf-moisture" class="select">' + moistureOpts + '</select></div>'
+        + '<div><label class="field-label" for="pf-interval">물 주기 간격(일, 1~60)</label><input id="pf-interval" type="number" min="1" max="60" class="input" value="' + esc(p ? p.wateringIntervalDays : 3) + '" /></div>'
+        + '</div>'
+        + '<div class="grid-2">'
+        + '<div><label class="field-label" for="pf-temp">현재 온도 (°C, -20~60)</label><input id="pf-temp" type="number" step="0.5" min="-20" max="60" class="input" value="' + esc(p ? (p.currentTempC != null ? p.currentTempC : '') : 22) + '" /></div>'
+        + '<div><label class="field-label" for="pf-ph">현재 토양 pH (0~14)</label><input id="pf-ph" type="number" step="0.1" min="0" max="14" class="input" value="' + esc(p ? (p.currentPh != null ? p.currentPh : '') : 6.5) + '" /></div>'
+        + '</div>'
+        + '<div class="sub-box">'
+        + '<label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;cursor:pointer;">'
+        + '<input id="pf-press-en" type="checkbox"' + (p && p.soilPressureEnabled ? ' checked' : '') + ' />'
+        + '<span>토양 압력 실험 조건 설정 (선택)</span>'
+        + '</label>'
+        + '<div id="pf-press-fields" style="margin-top:12px;' + (p && p.soilPressureEnabled ? '' : 'display:none;') + '">'
+        + '<div class="grid-3">'
+        + '<div><label class="field-label" for="pf-kpa">목표 압력 (kPa, 0~500)</label><input id="pf-kpa" type="number" min="0" max="500" class="input" value="' + esc(p && p.targetPressureKpa != null ? p.targetPressureKpa : 20) + '" /></div>'
+        + '<div><label class="field-label" for="pf-pinterval">점검 간격(일, 1~90)</label><input id="pf-pinterval" type="number" min="1" max="90" class="input" value="' + esc(p && p.pressureIntervalDays ? p.pressureIntervalDays : 7) + '" /></div>'
+        + '<div><label class="field-label" for="pf-pdate">최근 압력 점검일</label><input id="pf-pdate" type="date" class="input" value="' + esc(p && p.lastPressureDate ? p.lastPressureDate : today) + '" /></div>'
+        + '</div>'
+        + '<div style="margin-top:10px;"><label class="field-label" for="pf-pnote">압력 유지/실험 메모</label><input id="pf-pnote" class="input" value="' + esc(p && p.pressureConditionNote ? p.pressureConditionNote : '') + '" placeholder="예: 분동 200g으로 표토 가압 유지" /></div>'
+        + '</div>'
+        + '</div>'
+        + '<label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;cursor:pointer;">'
+        + '<input id="pf-auto-ai" type="checkbox" checked />'
+        + '<span>저장 시 품종·생육 단계 맞춤 생육 가이드 자동 분석하기</span>'
+        + '</label>'
+        + '<div id="pf-error" style="color:var(--danger-text);font-size:13px;font-weight:600;display:none;"></div>'
+        + '<div style="display:flex;justify-content:flex-end;gap:8px;">'
+        + '<button type="button" class="btn btn-outline" id="pf-cancel">취소</button>'
+        + '<button type="submit" class="btn btn-primary">' + (p ? '수정 저장' : '식물 등록하기') + '</button>'
+        + '</div>'
+        + '</form>';
+
+      mountModal(p ? p.name + ' 정보 수정' : '새 식물 등록', bodyHtml);
+
+      document.getElementById('pf-cancel').onclick = closeModal;
+      document.getElementById('pf-press-en').onchange = function (e) {
+        document.getElementById('pf-press-fields').style.display = e.target.checked ? '' : 'none';
+      };
+
+      const presetBar = document.getElementById('pf-preset-bar');
+      presetBar.onclick = function (e) {
+        const btn = e.target.closest('[data-preset-url]');
+        if (!btn) return;
+        photoUrl = btn.getAttribute('data-preset-url');
+        document.getElementById('pf-photo-preview').src = photoUrl;
+        Array.prototype.forEach.call(presetBar.querySelectorAll('[data-preset-url]'), function (b) {
+          b.classList.toggle('active', b === btn);
+        });
+      };
+
+      document.getElementById('pf-file').onchange = function (e) {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        compressImageFile(file).then(function (dataUrl) {
+          photoUrl = dataUrl;
+          document.getElementById('pf-photo-preview').src = photoUrl;
+        }).catch(function (err) {
+          showToast(err.message);
+        });
+      };
+
+      document.getElementById('plant-form').onsubmit = function (e) {
+        e.preventDefault();
+        const errEl = document.getElementById('pf-error');
+        function fail(msg) { errEl.textContent = msg; errEl.style.display = 'block'; }
+
+        const name = document.getElementById('pf-name').value.trim();
+        const species = document.getElementById('pf-species').value.trim();
+        const category = document.getElementById('pf-category').value;
+        const growthStage = document.getElementById('pf-stage').value;
+        const startDate = document.getElementById('pf-start').value;
+        const experimentGroup = document.getElementById('pf-group').value.trim();
+        const location = document.getElementById('pf-loc').value.trim();
+        const lastWateredDate = document.getElementById('pf-water-date').value;
+        const soilMoisture = document.getElementById('pf-moisture').value;
+        const interval = Number(document.getElementById('pf-interval').value);
+        const tempRaw = document.getElementById('pf-temp').value;
+        const phRaw = document.getElementById('pf-ph').value;
+        const currentTempC = tempRaw === '' ? undefined : Number(tempRaw);
+        const currentPh = phRaw === '' ? undefined : Number(phRaw);
+        const soilPressureEnabled = document.getElementById('pf-press-en').checked;
+        const kpaRaw = document.getElementById('pf-kpa').value;
+        const targetPressureKpa = kpaRaw === '' ? undefined : Number(kpaRaw);
+        const pressureIntervalDays = Number(document.getElementById('pf-pinterval').value);
+        const lastPressureDate = document.getElementById('pf-pdate').value;
+        const pressureConditionNote = document.getElementById('pf-pnote').value.trim();
+        const autoAi = document.getElementById('pf-auto-ai').checked;
+
+        if (!name || !species) return fail('식물 이름과 품종을 모두 입력해 주세요.');
+        if (!isValidDateStr(startDate) || !isValidDateStr(lastWateredDate)) return fail('올바른 날짜 형식을 선택해 주세요.');
+        if (!Number.isFinite(interval) || interval < 1 || interval > 60) return fail('물 주기 간격은 1~60일 사이여야 합니다.');
+        if (currentTempC !== undefined && (!Number.isFinite(currentTempC) || currentTempC < -20 || currentTempC > 60)) return fail('온도는 -20~60°C 범위로 입력해 주세요.');
+        if (currentPh !== undefined && (!Number.isFinite(currentPh) || currentPh < 0 || currentPh > 14)) return fail('토양 pH는 0~14 범위로 입력해 주세요.');
+        if (soilPressureEnabled) {
+          if (targetPressureKpa !== undefined && (!Number.isFinite(targetPressureKpa) || targetPressureKpa < 0 || targetPressureKpa > 500)) return fail('목표 압력은 0~500 kPa 범위로 입력해 주세요.');
+          if (!Number.isFinite(pressureIntervalDays) || pressureIntervalDays < 1 || pressureIntervalDays > 90) return fail('압력 점검 간격은 1~90일 사이여야 합니다.');
+        }
+
+        const speciesOrStageChanged = p ? (p.species !== species || p.growthStage !== growthStage || p.category !== category) : true;
+        const nextWaterOverride = (!p || p.lastWateredDate !== lastWateredDate || p.wateringIntervalDays !== interval)
+          ? addDays(lastWateredDate, interval)
+          : p.nextWaterCheckOverride;
+        const nextPressureDate = soilPressureEnabled
+          ? addDays(isValidDateStr(lastPressureDate) ? lastPressureDate : today, pressureIntervalDays)
+          : undefined;
+
+        const draft = normalizePlantSchedules({
+          id: p ? p.id : uid('plant'),
+          name: name,
+          species: species,
+          category: category,
+          photoUrl: photoUrl,
+          startDate: startDate,
+          growthStage: growthStage,
+          experimentGroup: experimentGroup,
+          location: location,
+          lastWateredDate: lastWateredDate,
+          soilMoisture: soilMoisture,
+          wateringIntervalDays: interval,
+          nextWaterCheckOverride: nextWaterOverride,
+          currentTempC: currentTempC,
+          currentPh: currentPh,
+          soilPressureEnabled: soilPressureEnabled,
+          targetPressureKpa: soilPressureEnabled ? targetPressureKpa : undefined,
+          pressureIntervalDays: soilPressureEnabled ? pressureIntervalDays : 7,
+          lastPressureDate: soilPressureEnabled ? (isValidDateStr(lastPressureDate) ? lastPressureDate : today) : undefined,
+          nextPressureDate: nextPressureDate,
+          pressureConditionNote: soilPressureEnabled ? pressureConditionNote : undefined,
+          aiGuide: autoAi ? null : (speciesOrStageChanged ? null : (p ? p.aiGuide : null)),
+          createdAt: p ? p.createdAt : new Date().toISOString()
+        });
+
+        if (autoAi) draft.aiGuide = generateBotanicalGuide(draft);
+
+        if (p) {
+          state.plants = state.plants.map(function (item) { return item.id === draft.id ? draft : item; });
+          showToast(draft.name + ' 정보를 수정했습니다.');
+        } else {
+          state.plants = [draft].concat(state.plants);
+          showToast(draft.name + ' 식물이 등록되었습니다.');
+        }
+        saveState();
+        closeModal();
+        render();
+      };
+    }
+
+    function openCareModal(plantId, mode) {
+      const p = getPlantById(plantId);
+      if (!p) return;
+      const today = getTodayStr();
+      const w = evaluateWateringStatus(p);
+      const defaultWaterMode = (p.soilMoisture === '적정(촉촉함)' || p.soilMoisture === '과습') ? 'check_only' : 'watered';
+
+      let bodyHtml = '';
+      if (mode === 'water') {
+        bodyHtml = '<form id="care-form" class="stack" style="gap:14px;">'
+          + '<div class="sub-box" style="font-size:13px;"><strong>현재 수분 진단:</strong> ' + esc(w.reason) + '</div>'
+          + '<div style="display:flex;flex-direction:column;gap:8px;">'
+          + '<label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;cursor:pointer;"><input type="radio" name="wmode" value="watered"' + (defaultWaterMode === 'watered' ? ' checked' : '') + ' /><span>오늘 물을 주었습니다 (수분 적정으로 기록 + 다음 주기 예약)</span></label>'
+          + '<label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;cursor:pointer;"><input type="radio" name="wmode" value="check_only"' + (defaultWaterMode === 'check_only' ? ' checked' : '') + ' /><span>아직 촉촉/과습하여 급수를 보류하고 상태만 기록합니다</span></label>'
+          + '</div>'
+          + '<div class="grid-2">'
+          + '<div><label class="field-label" for="cf-date">기록 날짜</label><input id="cf-date" type="date" class="input" value="' + today + '" required /></div>'
+          + '<div><label class="field-label" for="cf-moisture">점검 후 토양 수분</label><select id="cf-moisture" class="select">'
+          + MOISTURE_OPTIONS.map(function (m) {
+              const sel = defaultWaterMode === 'watered' ? m === '적정(촉촉함)' : m === p.soilMoisture;
+              return '<option value="' + esc(m) + '"' + (sel ? ' selected' : '') + '>' + esc(m) + '</option>';
+            }).join('')
+          + '</select></div>'
+          + '</div>'
+          + '<div id="cf-warn" class="status-warning" style="padding:10px 12px;border-radius:10px;border:1px solid var(--warn-border);font-size:12px;display:none;"></div>'
+          + '<div><label class="field-label" for="cf-note">메모 (선택)</label><input id="cf-note" class="input" placeholder="예: 겉흙 2cm 마름 확인 후 150ml 급수" /></div>'
+          + '<div style="display:flex;justify-content:flex-end;gap:8px;"><button type="button" class="btn btn-outline" id="cf-cancel">취소</button><button type="submit" class="btn btn-primary">저장</button></div>'
+          + '</form>';
+      } else if (mode === 'pressure') {
+        bodyHtml = '<form id="care-form" class="stack" style="gap:14px;">'
+          + '<div class="sub-box" style="font-size:13px;">설정된 토양 압력 실험 조건: <strong>' + (p.targetPressureKpa != null ? p.targetPressureKpa + ' kPa' : '사용자 설정') + '</strong> · ' + (p.pressureIntervalDays || 7) + '일마다 점검</div>'
+          + '<div class="grid-2">'
+          + '<div><label class="field-label" for="cf-date">점검 날짜</label><input id="cf-date" type="date" class="input" value="' + today + '" required /></div>'
+          + '<div><label class="field-label" for="cf-kpa">실측 압력 (kPa, 0~500)</label><input id="cf-kpa" type="number" min="0" max="500" class="input" value="' + esc(p.targetPressureKpa != null ? p.targetPressureKpa : 20) + '" /></div>'
+          + '</div>'
+          + '<div><label class="field-label" for="cf-note">압력 점검 메모</label><input id="cf-note" class="input" value="' + esc(p.pressureConditionNote || '') + '" placeholder="예: 표토 다짐 상태 양호, 목표 압력 유지" /></div>'
+          + '<div style="display:flex;justify-content:flex-end;gap:8px;"><button type="button" class="btn btn-outline" id="cf-cancel">취소</button><button type="submit" class="btn btn-primary">점검 저장</button></div>'
+          + '</form>';
+      } else {
+        bodyHtml = '<form id="care-form" class="stack" style="gap:14px;">'
+          + '<div class="grid-2">'
+          + '<div><label class="field-label" for="cf-temp">현재 온도 (°C, -20~60)</label><input id="cf-temp" type="number" step="0.5" min="-20" max="60" class="input" value="' + esc(p.currentTempC != null ? p.currentTempC : 22) + '" /></div>'
+          + '<div><label class="field-label" for="cf-ph">현재 토양 pH (0~14)</label><input id="cf-ph" type="number" step="0.1" min="0" max="14" class="input" value="' + esc(p.currentPh != null ? p.currentPh : 6.5) + '" /></div>'
+          + '</div>'
+          + '<div id="cf-env-preview" class="sub-box" style="font-size:13px;"></div>'
+          + '<div style="display:flex;justify-content:flex-end;gap:8px;"><button type="button" class="btn btn-outline" id="cf-cancel">취소</button><button type="submit" class="btn btn-primary">측정값 저장</button></div>'
+          + '</form>';
+      }
+
+      mountModal(p.name + ' · ' + (mode === 'water' ? '물·수분 점검' : mode === 'pressure' ? '토양 압력 점검' : '온도·토양 pH 기록'), bodyHtml);
+      document.getElementById('cf-cancel').onclick = closeModal;
+
+      if (mode === 'water') {
+        const warnEl = document.getElementById('cf-warn');
+        function refreshWarn() {
+          const checked = document.querySelector('input[name="wmode"]:checked').value;
+          if (checked === 'watered' && (p.soilMoisture === '과습' || p.soilMoisture === '적정(촉촉함)')) {
+            warnEl.textContent = '주의: 현재 "' + p.soilMoisture + '" 상태입니다. 흙이 아직 젖어 있다면 급수를 보류하는 것이 안전합니다.';
+            warnEl.style.display = 'block';
+          } else {
+            warnEl.style.display = 'none';
+          }
+        }
+        refreshWarn();
+        Array.prototype.forEach.call(document.querySelectorAll('input[name="wmode"]'), function (r) { r.onchange = refreshWarn; });
+      }
+
+      if (mode === 'env') {
+        function refreshPreview() {
+          const tVal = document.getElementById('cf-temp').value;
+          const phVal = document.getElementById('cf-ph').value;
+          const sim = evaluateEnvironment(Object.assign({}, p, {
+            currentTempC: tVal === '' ? undefined : Number(tVal),
+            currentPh: phVal === '' ? undefined : Number(phVal)
+          }));
+          document.getElementById('cf-env-preview').innerHTML = '<div><strong>온도 판정:</strong> ' + esc(sim.tempLabel) + ' — ' + esc(sim.tempDeltaText) + '</div>'
+            + '<div style="margin-top:6px;"><strong>pH 판정:</strong> ' + esc(sim.phLabel) + ' — ' + esc(sim.phDeltaText) + '</div>';
+        }
+        refreshPreview();
+        document.getElementById('cf-temp').oninput = refreshPreview;
+        document.getElementById('cf-ph').oninput = refreshPreview;
+      }
+
+      document.getElementById('care-form').onsubmit = function (e) {
+        e.preventDefault();
+        const fresh = getPlantById(plantId);
+        if (!fresh) return;
+        let updated = Object.assign({}, fresh);
+        let summary = '';
+        let dateStr = today;
+
+        if (mode === 'water') {
+          dateStr = document.getElementById('cf-date').value;
+          if (!isValidDateStr(dateStr)) { showToast('올바른 날짜를 선택해 주세요.'); return; }
+          const wmode = document.querySelector('input[name="wmode"]:checked').value;
+          const moisture = document.getElementById('cf-moisture').value;
+          const note = document.getElementById('cf-note').value.trim();
+          updated.soilMoisture = moisture;
+          if (wmode === 'watered') {
+            updated.lastWateredDate = dateStr;
+            updated.nextWaterCheckOverride = addDays(dateStr, Math.max(1, Number(fresh.wateringIntervalDays) || 3));
+            summary = '물 주기 완료 (' + moisture + ')' + (note ? ' · ' + note : '');
+          } else {
+            updated.nextWaterCheckOverride = addDays(dateStr, moisture === '과습' ? 2 : 1);
+            summary = '급수 보류 / 수분 점검 (' + moisture + ')' + (note ? ' · ' + note : '');
+          }
+        } else if (mode === 'pressure') {
+          dateStr = document.getElementById('cf-date').value;
+          if (!isValidDateStr(dateStr)) { showToast('올바른 날짜를 선택해 주세요.'); return; }
+          const kpa = Number(document.getElementById('cf-kpa').value);
+          if (!Number.isFinite(kpa) || kpa < 0 || kpa > 500) { showToast('압력은 0~500 kPa 사이여야 합니다.'); return; }
+          const note = document.getElementById('cf-note').value.trim();
+          updated.soilPressureEnabled = true;
+          updated.targetPressureKpa = kpa;
+          updated.lastPressureDate = dateStr;
+          updated.nextPressureDate = addDays(dateStr, Math.max(1, Number(fresh.pressureIntervalDays) || 7));
+          updated.pressureConditionNote = note;
+          summary = '토양 압력 점검 (' + kpa + ' kPa)' + (note ? ' · ' + note : '');
+        } else {
+          const tVal = Number(document.getElementById('cf-temp').value);
+          const phVal = Number(document.getElementById('cf-ph').value);
+          if (!Number.isFinite(tVal) || tVal < -20 || tVal > 60) { showToast('온도는 -20~60°C 사이여야 합니다.'); return; }
+          if (!Number.isFinite(phVal) || phVal < 0 || phVal > 14) { showToast('토양 pH는 0~14 사이여야 합니다.'); return; }
+          updated.currentTempC = tVal;
+          updated.currentPh = phVal;
+          summary = '온도 ' + tVal + '°C · 토양 pH ' + phVal + ' 기록';
+        }
+
+        state.plants = state.plants.map(function (item) { return item.id === updated.id ? updated : item; });
+        state.careLogs = [{
+          id: uid('log'),
+          plantId: fresh.id,
+          date: dateStr,
+          type: mode === 'env' ? 'ph' : mode,
+          summary: summary,
+          createdAt: new Date().toISOString()
+        }].concat(state.careLogs).slice(0, 120);
+        saveState();
+        closeModal();
+        showToast(fresh.name + ': ' + summary);
+        render();
+      };
+    }
+
+    function openGrowthModal(defaultPlantId, existingRecord) {
+      const r = existingRecord || null;
+      const targetPlantId = r ? r.plantId : (defaultPlantId || (state.plants[0] && state.plants[0].id));
+      let photoUrl = r ? (r.photoUrl || '') : '';
+
+      const plantOpts = state.plants.map(function (p) {
+        return '<option value="' + esc(p.id) + '"' + (p.id === targetPlantId ? ' selected' : '') + '>' + esc(p.name) + '</option>';
+      }).join('');
+
+      const bodyHtml = '<form id="growth-form" class="stack" style="gap:14px;">'
+        + '<div class="grid-2">'
+        + '<div><label class="field-label" for="gf-plant">대상 식물</label><select id="gf-plant" class="select"' + (r ? ' disabled' : '') + '>' + plantOpts + '</select></div>'
+        + '<div><label class="field-label" for="gf-date">측정 날짜</label><input id="gf-date" type="date" class="input" value="' + esc(r ? r.date : getTodayStr()) + '" required /></div>'
+        + '</div>'
+        + '<div class="grid-2">'
+        + '<div><label class="field-label" for="gf-height">키 (cm)</label><input id="gf-height" type="number" step="0.1" min="0" max="500" class="input" required value="' + esc(r ? r.heightCm : '') + '" placeholder="예: 12.5" /></div>'
+        + '<div><label class="field-label" for="gf-leaves">잎 개수 (장)</label><input id="gf-leaves" type="number" min="0" max="500" class="input" required value="' + esc(r ? r.leafCount : '') + '" placeholder="예: 8" /></div>'
+        + '</div>'
+        + '<div><label class="field-label" for="gf-memo">관찰 메모 (선택)</label><input id="gf-memo" class="input" value="' + esc(r ? (r.memo || '') : '') + '" placeholder="예: 새 잎 2장 전개, 줄기 탄탄함" /></div>'
+        + '<div><label class="field-label" for="gf-file">사진 첨부 (선택)</label><input id="gf-file" type="file" accept="image/*" style="font-size:12px;" />'
+        + (photoUrl ? '<img id="gf-preview" src="' + esc(photoUrl) + '" alt="성장 사진" class="plant-thumb-sm" style="margin-top:8px;" />' : '<img id="gf-preview" alt="성장 사진" class="plant-thumb-sm" style="margin-top:8px;display:none;" />')
+        + '</div>'
+        + '<div style="display:flex;justify-content:flex-end;gap:8px;"><button type="button" class="btn btn-outline" id="gf-cancel">취소</button><button type="submit" class="btn btn-primary">' + (r ? '기록 수정' : '기록 저장') + '</button></div>'
+        + '</form>';
+
+      mountModal(r ? '성장 기록 수정' : '성장 기록 추가', bodyHtml);
+      document.getElementById('gf-cancel').onclick = closeModal;
+      document.getElementById('gf-file').onchange = function (e) {
+        const f = e.target.files && e.target.files[0];
+        if (!f) return;
+        compressImageFile(f).then(function (dataUrl) {
+          photoUrl = dataUrl;
+          const prev = document.getElementById('gf-preview');
+          prev.src = photoUrl;
+          prev.style.display = 'block';
+        }).catch(function (err) { showToast(err.message); });
+      };
+
+      document.getElementById('growth-form').onsubmit = function (e) {
+        e.preventDefault();
+        const plantId = r ? r.plantId : document.getElementById('gf-plant').value;
+        const date = document.getElementById('gf-date').value;
+        const heightCm = Number(document.getElementById('gf-height').value);
+        const leafCount = Number(document.getElementById('gf-leaves').value);
+        const memo = document.getElementById('gf-memo').value.trim();
+
+        if (!isValidDateStr(date)) { showToast('올바른 날짜를 선택해 주세요.'); return; }
+        if (!Number.isFinite(heightCm) || heightCm < 0 || heightCm > 500) { showToast('키는 0~500cm 사이여야 합니다.'); return; }
+        if (!Number.isFinite(leafCount) || leafCount < 0 || leafCount > 500) { showToast('잎 개수는 0~500 사이여야 합니다.'); return; }
+
+        const rec = {
+          id: r ? r.id : uid('growth'),
+          plantId: plantId,
+          date: date,
+          heightCm: heightCm,
+          leafCount: Math.round(leafCount),
+          memo: memo,
+          photoUrl: photoUrl || undefined,
+          createdAt: r ? r.createdAt : new Date().toISOString()
+        };
+
+        if (r) {
+          state.growthRecords = state.growthRecords.map(function (item) { return item.id === rec.id ? rec : item; });
+          showToast('성장 기록을 수정했습니다.');
+        } else {
+          state.growthRecords = [rec].concat(state.growthRecords);
+          showToast('성장 기록을 저장했습니다.');
+        }
+        saveState();
+        closeModal();
+        render();
+      };
+    }
+
+    function openDeleteConfirmModal(plant) {
+      const bodyHtml = '<div style="font-size:14px;line-height:1.6;"><strong>' + esc(plant.name) + '</strong> 식물을 등록 취소(삭제)하시겠습니까?<br/>연결된 성장 기록과 관리 이력도 함께 정리됩니다.</div>'
+        + '<div style="display:flex;justify-content:flex-end;gap:8px;">'
+        + '<button type="button" class="btn btn-outline" id="del-cancel">취소</button>'
+        + '<button type="button" class="btn btn-danger-outline" id="del-confirm">네, 삭제합니다</button>'
+        + '</div>';
+      mountModal('식물 등록 취소', bodyHtml);
+      document.getElementById('del-cancel').onclick = closeModal;
+      document.getElementById('del-confirm').onclick = function () {
+        state.plants = state.plants.filter(function (p) { return p.id !== plant.id; });
+        state.growthRecords = state.growthRecords.filter(function (r) { return r.plantId !== plant.id; });
+        state.careLogs = state.careLogs.filter(function (l) { return l.plantId !== plant.id; });
+        state.growthCompareIds = state.growthCompareIds.filter(function (id) { return id !== plant.id; });
+        if (state.selectedPlantId === plant.id) state.selectedPlantId = null;
+        if (state.aiContextPlantId === plant.id) state.aiContextPlantId = null;
+        if (state.growthSelectedPlantId === plant.id) state.growthSelectedPlantId = state.plants[0] ? state.plants[0].id : null;
+        saveState();
+        closeModal();
+        showToast(plant.name + ' 등록을 취소했습니다.');
+        render();
+      };
+    }
+
+    /* Pure JS PKZIP (STORE method 0 + CRC32 + UTF-8 filenames) for GitHub/Vercel ZIP export */
+    const CRC_TABLE = (function () {
+      const t = new Uint32Array(256);
+      for (let i = 0; i < 256; i++) {
+        let c = i;
+        for (let k = 0; k < 8; k++) c = (c & 1) ? (0xedb88320 ^ (c >>> 1)) : (c >>> 1);
+        t[i] = c >>> 0;
+      }
+      return t;
+    })();
+
+    function crc32(bytes) {
+      let c = 0xffffffff;
+      for (let i = 0; i < bytes.length; i++) c = CRC_TABLE[(c ^ bytes[i]) & 0xff] ^ (c >>> 8);
+      return (c ^ 0xffffffff) >>> 0;
+    }
+
+    function buildZipBlob(files) {
+      const encoder = new TextEncoder();
+      const now = new Date();
+      const dosTime = ((now.getHours() & 31) << 11) | ((now.getMinutes() & 63) << 5) | ((now.getSeconds() >> 1) & 31);
+      const dosDate = (((Math.max(1980, now.getFullYear()) - 1980) & 127) << 9) | (((now.getMonth() + 1) & 15) << 5) | (now.getDate() & 31);
+      const chunks = [];
+      const central = [];
+      let offset = 0;
+
+      files.forEach(function (f) {
+        const nameBytes = encoder.encode(f.name);
+        const dataBytes = encoder.encode(f.content);
+        const crc = crc32(dataBytes);
+
+        const lf = new Uint8Array(30 + nameBytes.length);
+        const dv = new DataView(lf.buffer);
+        dv.setUint32(0, 0x04034b50, true);
+        dv.setUint16(4, 20, true);
+        dv.setUint16(6, 0x0800, true);
+        dv.setUint16(8, 0, true);
+        dv.setUint16(10, dosTime, true);
+        dv.setUint16(12, dosDate, true);
+        dv.setUint32(14, crc, true);
+        dv.setUint32(18, dataBytes.length, true);
+        dv.setUint32(22, dataBytes.length, true);
+        dv.setUint16(26, nameBytes.length, true);
+        dv.setUint16(28, 0, true);
+        lf.set(nameBytes, 30);
+
+        chunks.push(lf, dataBytes);
+
+        const cd = new Uint8Array(46 + nameBytes.length);
+        const cdv = new DataView(cd.buffer);
+        cdv.setUint32(0, 0x02014b50, true);
+        cdv.setUint16(4, 20, true);
+        cdv.setUint16(6, 20, true);
+        cdv.setUint16(8, 0x0800, true);
+        cdv.setUint16(10, 0, true);
+        cdv.setUint16(12, dosTime, true);
+        cdv.setUint16(14, dosDate, true);
+        cdv.setUint32(16, crc, true);
+        cdv.setUint32(20, dataBytes.length, true);
+        cdv.setUint32(24, dataBytes.length, true);
+        cdv.setUint16(28, nameBytes.length, true);
+        cdv.setUint16(30, 0, true);
+        cdv.setUint16(32, 0, true);
+        cdv.setUint16(34, 0, true);
+        cdv.setUint16(36, 0, true);
+        cdv.setUint32(38, 0, true);
+        cdv.setUint32(42, offset, true);
+        cd.set(nameBytes, 46);
+        central.push(cd);
+
+        offset += lf.length + dataBytes.length;
+      });
+
+      let cdSize = 0;
+      central.forEach(function (c) { cdSize += c.length; });
+      const eocd = new Uint8Array(22);
+      const edv = new DataView(eocd.buffer);
+      edv.setUint32(0, 0x06054b50, true);
+      edv.setUint16(8, files.length, true);
+      edv.setUint16(10, files.length, true);
+      edv.setUint32(12, cdSize, true);
+      edv.setUint32(16, offset, true);
+
+      return new Blob(chunks.concat(central, [eocd]), { type: 'application/zip' });
+    }
+
+    function exportGithubZip() {
+      const clone = document.documentElement.cloneNode(true);
+      ['app-content', 'modal-root', 'toast-root'].forEach(function (id) {
+        const el = clone.querySelector('#' + id);
+        if (el) el.innerHTML = '';
+      });
+      Array.prototype.forEach.call(clone.querySelectorAll('script[src*="@vite"], script[type="module"]'), function (s) {
+        if (s && s.parentNode) s.parentNode.removeChild(s);
+      });
+      const htmlContent = '<!doctype html>\n' + clone.outerHTML + '\n';
+      const readmeContent = [
+        '# GrowLab AI',
+        '',
+        '단일 `index.html` 파일로 구성된 스마트 식물 생육 및 재배 실험 관리 웹 앱입니다.',
+        '',
+        '## 특징',
+        '- 프레임워크·빌드 도구 없이 `index.html` 단일 파일로 즉시 실행 가능 (파일 더블 클릭 `file://` 지원)',
+        '- 브라우저 `localStorage`에 식물 정보, 물 주기, 토양 압력(kPa), 온도, 토양 pH, 성장 기록 영구 저장',
+        '- GitHub에 그대로 업로드 후 Vercel에서 별도 빌드 설정 없이 즉시 정적 배포 가능',
+        ''
+      ].join('\n');
+
+      const blob = buildZipBlob([
+        { name: 'index.html', content: htmlContent },
+        { name: 'README.md', content: readmeContent }
+      ]);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'growlab-ai-vercel.zip';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+      showToast('GitHub/Vercel 배포용 ZIP 파일을 다운로드했습니다.');
+    }
+
+    function render() {
+      Array.prototype.forEach.call(document.querySelectorAll('[data-nav]'), function (btn) {
+        if (btn.classList.contains('top-nav-btn') || btn.classList.contains('bottom-nav-btn')) {
+          btn.classList.toggle('active', btn.getAttribute('data-nav') === state.activeTab);
+        }
+      });
+
+      const contentEl = document.getElementById('app-content');
+      if (!contentEl) return;
+
+      if (state.activeTab === 'home') contentEl.innerHTML = renderHome();
+      else if (state.activeTab === 'plants') contentEl.innerHTML = renderPlants();
+      else if (state.activeTab === 'schedule') contentEl.innerHTML = renderSchedule();
+      else if (state.activeTab === 'growth') contentEl.innerHTML = renderGrowth();
+      else if (state.activeTab === 'ai') contentEl.innerHTML = renderAiCounsel();
+
+      const aiSelect = document.getElementById('ai-plant-select');
+      if (aiSelect) {
+        aiSelect.onchange = function (e) {
+          state.aiContextPlantId = e.target.value || null;
+          render();
+        };
+      }
+
+      const aiForm = document.getElementById('ai-chat-form');
+      if (aiForm) {
+        aiForm.onsubmit = function (e) {
+          e.preventDefault();
+          const input = document.getElementById('ai-chat-input');
+          const text = input ? input.value.trim() : '';
+          if (!text) return;
+          const ctxPlant = state.aiContextPlantId ? getPlantById(state.aiContextPlantId) : null;
+          const answer = generateBotanicalCounsel(text, ctxPlant, state.plants);
+          state.chatMessages = state.chatMessages.concat([
+            { id: uid('msg'), role: 'user', content: text },
+            { id: uid('msg'), role: 'assistant', content: answer }
+          ]).slice(-40);
+          saveState();
+          render();
+          const box = document.getElementById('chat-box');
+          if (box) box.scrollTop = box.scrollHeight;
+        };
+      }
+    }
+
+    document.getElementById('btn-open-register').onclick = function () { openPlantModal(null); };
+    document.getElementById('btn-download-zip').onclick = exportGithubZip;
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closeModal();
+    });
+
+    document.addEventListener('click', function (e) {
+      const navBtn = e.target.closest('[data-nav]');
+      if (navBtn) { setTab(navBtn.getAttribute('data-nav')); return; }
+
+      const homeCat = e.target.closest('[data-home-cat]');
+      if (homeCat) { state.homeTaskCategoryFilter = homeCat.getAttribute('data-home-cat'); render(); return; }
+
+      const schedCat = e.target.closest('[data-sched-cat]');
+      if (schedCat) { state.scheduleFilter = schedCat.getAttribute('data-sched-cat'); render(); return; }
+
+      const schedPri = e.target.closest('[data-sched-pri]');
+      if (schedPri) { state.schedulePriorityFilter = schedPri.getAttribute('data-sched-pri'); render(); return; }
+
+      const gpBtn = e.target.closest('[data-growth-plant]');
+      if (gpBtn) { state.growthSelectedPlantId = gpBtn.getAttribute('data-growth-plant'); render(); return; }
+
+      const gcBtn = e.target.closest('[data-toggle-compare]');
+      if (gcBtn) {
+        const id = gcBtn.getAttribute('data-toggle-compare');
+        if (state.growthCompareIds.indexOf(id) !== -1) {
+          state.growthCompareIds = state.growthCompareIds.filter(function (x) { return x !== id; });
+        } else {
+          state.growthCompareIds = state.growthCompareIds.concat([id]);
+        }
+        render();
+        return;
+      }
+
+      const gmBtn = e.target.closest('[data-growth-metric]');
+      if (gmBtn) { state.growthMetric = gmBtn.getAttribute('data-growth-metric'); render(); return; }
+
+      const quickBtn = e.target.closest('[data-quick-q]');
+      if (quickBtn) {
+        const qText = quickBtn.textContent.trim();
+        const input = document.getElementById('ai-chat-input');
+        const form = document.getElementById('ai-chat-form');
+        if (input && form) {
+          input.value = qText;
+          form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+        }
+        return;
+      }
+
+      const actBtn = e.target.closest('[data-action]');
+      if (!actBtn) return;
+      const action = actBtn.getAttribute('data-action');
+
+      if (action === 'open-register') {
+        openPlantModal(null);
+      } else if (action === 'open-plant') {
+        state.selectedPlantId = actBtn.getAttribute('data-id');
+        state.activeTab = 'plants';
+        render();
+      } else if (action === 'close-detail') {
+        state.selectedPlantId = null;
+        render();
+      } else if (action === 'edit-plant') {
+        const p = getPlantById(actBtn.getAttribute('data-id'));
+        if (p) openPlantModal(p);
+      } else if (action === 'delete-plant') {
+        const p = getPlantById(actBtn.getAttribute('data-id'));
+        if (p) openDeleteConfirmModal(p);
+      } else if (action === 'regen-guide') {
+        const p = getPlantById(actBtn.getAttribute('data-id'));
+        if (p) {
+          const updated = Object.assign({}, p, { aiGuide: generateBotanicalGuide(p) });
+          state.plants = state.plants.map(function (item) { return item.id === updated.id ? updated : item; });
+          saveState();
+          showToast(updated.name + ' 맞춤 생육 가이드를 업데이트했습니다.');
+          render();
+        }
+      } else if (action === 'open-care') {
+        openCareModal(actBtn.getAttribute('data-id'), actBtn.getAttribute('data-mode'));
+      } else if (action === 'complete-task') {
+        const taskId = actBtn.getAttribute('data-task-id');
+        const tasks = buildDailyTasks(state.plants);
+        const found = tasks.find(function (t) { return t.id === taskId; });
+        if (found) completeDailyTask(found);
+      } else if (action === 'toggle-compare-mode') {
+        state.growthCompareMode = !state.growthCompareMode;
+        if (state.growthCompareMode && state.growthCompareIds.length === 0 && state.plants.length > 0) {
+          state.growthCompareIds = state.plants.slice(0, 2).map(function (p) { return p.id; });
+        }
+        render();
+      } else if (action === 'open-growth-modal') {
+        openGrowthModal(actBtn.getAttribute('data-plant-id'), null);
+      } else if (action === 'edit-growth') {
+        const rid = actBtn.getAttribute('data-id');
+        const rec = state.growthRecords.find(function (r) { return r.id === rid; });
+        if (rec) openGrowthModal(rec.plantId, rec);
+      } else if (action === 'delete-growth') {
+        const rid = actBtn.getAttribute('data-id');
+        state.growthRecords = state.growthRecords.filter(function (r) { return r.id !== rid; });
+        saveState();
+        showToast('성장 기록을 삭제했습니다.');
+        render();
+      } else if (action === 'ask-ai') {
+        state.aiContextPlantId = actBtn.getAttribute('data-id');
+        setTab('ai');
+      } else if (action === 'clear-chat') {
+        state.chatMessages = [];
+        saveState();
+        render();
+      }
+    });
+
+    render();
+  })();
+  </script>
+
+
+</body><whale-quicksearch translate="no" style="visibility: visible;"></whale-quicksearch></html>
